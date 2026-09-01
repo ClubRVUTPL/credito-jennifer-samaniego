@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Banco de pruebas del shader</title>
+    <!--
+      Herramienta SOLO de desarrollo (no entra en el build de producción).
+
+      Valida el shader 'alfa-empaquetada' sin cámara, sin marcador, sin vídeo
+      y sin FFmpeg: la textura empaquetada se genera por código en un <canvas>
+      (triángulo dorado + texto "ARRIBA" en la mitad de color; su máscara en
+      la mitad inferior) y se pinta sobre un plano con fondo a cuadros.
+
+      Lectura del resultado:
+        · CORRECTO  → triángulo dorado apuntando hacia arriba, texto "ARRIBA"
+                      legible, y los cuadros del fondo visibles alrededor.
+        · MITADES CAMBIADAS → formas grises/lavadas o transparencia sin
+                      sentido: el shader está leyendo la máscara como color.
+        · VOLTEO    → el texto "ARRIBA" se lee boca abajo.
+      En ambos casos malos: pulsar el botón de alternar y anotar el valor que
+      funciona en MASCARA_ARRIBA_DEFECTO (src/alpha-video.js).
+    -->
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #14120f;
+        color: #f2ede4;
+      }
+      header {
+        padding: 1rem;
+        max-width: 44rem;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 0 0 0.25rem;
+        font-size: 1.2rem;
+      }
+      p {
+        margin: 0.25rem 0;
+        color: #b3aa9b;
+        font-size: 0.9rem;
+      }
+      .controles {
+        margin: 0.75rem 0;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      button {
+        font: inherit;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        border: 0;
+        background: #d9a441;
+        color: #1a1200;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      code {
+        background: #262219;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      /* Fondo a cuadros: la transparencia del plano se ve de inmediato. */
+      .visor {
+        position: relative;
+        max-width: 44rem;
+        height: 420px;
+        margin: 0 auto 1rem;
+        border-radius: 12px;
+        overflow: hidden;
+        background: repeating-conic-gradient(#4a4438 0% 25%, #2b2721 0% 50%) 0 0 / 40px 40px;
+      }
+      .visor a-scene {
+        position: absolute !important;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      /* Vista previa de la textura empaquetada, para comparar con el plano. */
+      .previa {
+        max-width: 44rem;
+        margin: 0 auto 2rem;
+        padding: 0 1rem 2rem;
+      }
+      .previa canvas {
+        height: 220px;
+        border: 1px solid #37322a;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Banco de pruebas del shader <code>alfa-empaquetada</code></h1>
+      <p>
+        Correcto = triángulo dorado apuntando hacia arriba, texto «ARRIBA»
+        legible y cuadros del fondo visibles alrededor de la figura.
+      </p>
+      <div class="controles">
+        <button id="alternar" type="button">Alternar mascaraArriba</button>
+        <span id="valor"></span>
+      </div>
+    </header>
+
+    <div class="visor" id="visor"></div>
+
+    <div class="previa">
+      <p>Textura empaquetada tal cual se genera (color arriba, máscara abajo):</p>
+      <canvas id="lienzo" width="480" height="720"></canvas>
+    </div>
+
+    <script type="module">
+      import 'aframe';
+      import { registerAlphaShader, MASCARA_ARRIBA_DEFECTO } from '/src/alpha-video.js';
+
+      registerAlphaShader(window.AFRAME);
+
+      /* ── Textura de prueba generada por código ─────────────────────────
+         Canvas de 480×720: la mitad superior (480×360) es el color y la
+         inferior la máscara. La figura es deliberadamente asimétrica en
+         vertical (triángulo + texto) para detectar volteos. */
+      const canvas = document.querySelector('#lienzo');
+      const ctx = canvas.getContext('2d');
+      const W = 480;
+      const H = 360; // altura de CADA mitad
+
+      function drawShape(offsetY, fillColor, textColor, t) {
+        // Trayectoria oscilante, como hará el vídeo real.
+        const cx = W / 2 + Math.sin(t / 900) * (W / 4);
+        const cy = offsetY + H / 2 + Math.sin(t / 500) * (H / 8);
+
+        // Triángulo apuntando hacia ARRIBA.
+        ctx.fillStyle = fillColor;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 70);
+        ctx.lineTo(cx + 60, cy + 50);
+        ctx.lineTo(cx - 60, cy + 50);
+        ctx.closePath();
+        ctx.fill();
+
+        // Texto: si se lee del revés, hay un volteo vertical.
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 34px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ARRIBA', cx, cy + 100);
+      }
+
+      function drawFrame(t) {
+        // Mitad de color: fondo llamativo A PROPÓSITO. Si el fondo azul se ve
+        // en el plano, la máscara no está funcionando.
+        ctx.fillStyle = '#1c3a6e';
+        ctx.fillRect(0, 0, W, H);
+        drawShape(0, '#d9a441', '#ffffff', t);
+
+        // Mitad de máscara: mismas formas en blanco sobre negro.
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, H, W, H);
+        drawShape(H, '#ffffff', '#ffffff', t);
+      }
+
+      /* ── Escena ────────────────────────────────────────────────────────── */
+      const scene = document.createElement('a-scene');
+      scene.setAttribute('embedded', '');
+      scene.setAttribute('vr-mode-ui', 'enabled: false');
+      scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
+      // alpha: true → el canvas de la escena es transparente y deja ver los cuadros.
+      scene.setAttribute('renderer', 'colorManagement: true; alpha: true');
+
+      const camera = document.createElement('a-entity');
+      camera.setAttribute('camera', '');
+      camera.setAttribute('position', '0 0 1.4');
+      scene.appendChild(camera);
+
+      const plane = document.createElement('a-plane');
+      plane.setAttribute('material', 'shader: alfa-empaquetada; transparent: true');
+      plane.setAttribute('width', '1.6');
+      plane.setAttribute('height', '1.2'); // 480 × 360 → 4:3
+      plane.setAttribute('position', '0 0 0');
+      scene.appendChild(plane);
+
+      document.querySelector('#visor').appendChild(scene);
+
+      /* ── Conexión canvas → uniform y bucle de animación ────────────────── */
+      const valorEl = document.querySelector('#valor');
+      const boton = document.querySelector('#alternar');
+
+      scene.addEventListener('loaded', () => {
+        const material = plane.components.material.material;
+        const texture = new window.AFRAME.THREE.CanvasTexture(canvas);
+        material.uniforms.src.value = texture;
+
+        const pintaValor = () => {
+          const v = material.uniforms.mascaraArriba.value;
+          valorEl.textContent =
+            `mascaraArriba = ${v}` +
+            (v === MASCARA_ARRIBA_DEFECTO ? ' (valor por defecto del proyecto)' : ' (alternativa)');
+        };
+        pintaValor();
+
+        boton.addEventListener('click', () => {
+          material.uniforms.mascaraArriba.value =
+            material.uniforms.mascaraArriba.value === 1 ? 0 : 1;
+          pintaValor();
+        });
+
+        const tick = (t) => {
+          drawFrame(t);
+          texture.needsUpdate = true;
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    </script>
+  </body>
+</html>

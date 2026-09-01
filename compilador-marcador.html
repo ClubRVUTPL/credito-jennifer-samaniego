@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Compilador del marcador</title>
+    <!--
+      Herramienta SOLO de desarrollo (no forma parte del build de producción).
+      Compila public/ar/placa.jpg a targets.mind usando el compilador que trae
+      el propio paquete mind-ar, e informa de los puntos característicos.
+      Instrucciones completas: scripts/compilar-marcador.md
+    -->
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 40rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      img {
+        max-width: 100%;
+        border: 1px solid #ccc;
+      }
+      #salida {
+        white-space: pre-wrap;
+        background: #f4f4f4;
+        padding: 1rem;
+        border-radius: 8px;
+      }
+      a.descarga {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.6rem 1rem;
+        background: #1a66d0;
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Compilador del marcador</h1>
+    <p>
+      Lee <code>public/ar/placa.jpg</code>, lo compila con el compilador del
+      paquete <code>mind-ar</code> y descarga <code>targets.mind</code>.
+    </p>
+    <div id="imagen"></div>
+    <p id="salida">Cargando la imagen…</p>
+    <div id="descarga"></div>
+
+    <script type="module">
+      // Importa el compilador desde el paquete instalado (nada de CDN).
+      import 'mind-ar/dist/mindar-image.prod.js';
+
+      const salida = document.querySelector('#salida');
+      const zonaImagen = document.querySelector('#imagen');
+      const zonaDescarga = document.querySelector('#descarga');
+
+      function log(texto) {
+        salida.textContent = texto;
+      }
+
+      async function cargarImagen(url) {
+        const img = new Image();
+        img.src = url;
+        await img.decode(); // lanza si la imagen no existe o no es válida
+        return img;
+      }
+
+      // Cuenta los puntos característicos de forma defensiva: la estructura
+      // interna de mind-ar puede variar entre versiones menores.
+      function contarPuntos(data) {
+        let matching = 0;
+        let tracking = 0;
+        (data.matchingData || []).forEach((nivel) => {
+          matching += (nivel.maximaPoints || []).length;
+          matching += (nivel.minimaPoints || []).length;
+        });
+        (data.trackingData || []).forEach((nivel) => {
+          tracking += (nivel.points || []).length;
+        });
+        return { matching, tracking };
+      }
+
+      async function main() {
+        let img;
+        try {
+          img = await cargarImagen('/ar/placa.jpg');
+        } catch {
+          log(
+            'No existe public/ar/placa.jpg (o no es una imagen válida).\n' +
+              'Coloca ahí la foto/diseño de la placa y recarga esta página.'
+          );
+          window.__errorCompilacion = 'falta public/ar/placa.jpg';
+          return;
+        }
+        zonaImagen.appendChild(img);
+
+        const compiler = new window.MINDAR.IMAGE.Compiler();
+        log('Compilando… 0 %');
+        const dataList = await compiler.compileImageTargets([img], (progreso) => {
+          log(`Compilando… ${progreso.toFixed(0)} %`);
+        });
+
+        const { matching, tracking } = contarPuntos(dataList[0]);
+        log(
+          `Compilación terminada.\n` +
+            `Puntos de detección (matching): ${matching}\n` +
+            `Puntos de seguimiento (tracking): ${tracking}\n\n` +
+            `Orientación: por debajo de ~100 puntos de detección el marcador será poco fiable;\n` +
+            `busca una imagen con más contraste, texto y detalle no repetitivo.`
+        );
+
+        const buffer = await compiler.exportData();
+
+        // Para el modo headless (scripts/compilar-marcador-headless.mjs):
+        // expone el resultado en una global. No afecta al uso manual.
+        // La conversión a base64 va por trozos: el buffer puede medir varios
+        // MB y el spread en String.fromCharCode desbordaría la pila.
+        const bytes = new Uint8Array(buffer);
+        let binario = '';
+        for (let i = 0; i < bytes.length; i += 32768) {
+          binario += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+        }
+        window.__resultadoCompilacion = { matching, tracking, base64: btoa(binario) };
+
+        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        const enlace = document.createElement('a');
+        enlace.className = 'descarga';
+        enlace.href = URL.createObjectURL(blob);
+        enlace.download = 'targets.mind';
+        enlace.textContent = 'Descargar targets.mind';
+        zonaDescarga.appendChild(enlace);
+      }
+
+      main();
+    </script>
+  </body>
+</html>

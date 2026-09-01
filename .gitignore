@@ -1,0 +1,22 @@
+node_modules/
+dist/
+assets-src/
+vite.https.config.mjs
+*.local
+.DS_Store
+
+# Local Netlify folder (histórico; el deploy es Vercel)
+.netlify
+
+# Enlace local de Vercel CLI
+.vercel
+
+# Configuración local de Claude Code
+.claude/
+
+# Másteres de vídeo sin comprimir (GitHub rechaza ficheros > 100 MB).
+# Lo que SÍ va a git son las versiones comprimidas de public/media/.
+# Para regenerarlas: scripts/encode-jennifer-alfa.bat
+video/
+public/videos marlon/
+frame-test.jpg

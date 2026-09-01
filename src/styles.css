@@ -1,0 +1,1806 @@
+/* styles.css — Un solo campo visual, de la portada a la realidad aumentada.
+   Diseño móvil primero; comprobado a 320 px de ancho.
+
+   Sistema visual: identidad institucional de la UTPL (azul + dorado),
+   investigada sobre utpl.edu.ec — no son colores inventados. La cabecera de
+   ese sitio usa #004270/#0A3361 de fondo con #FEBE10 como acento y
+   Montserrat en negrita para titulares.
+
+   ── Por qué todo es oscuro ────────────────────────────────────────────────
+
+   Antes había tres mundos: la portada en azul profundo, los créditos en
+   fondo claro con tarjetas, y la RA en negro. Ese salto de fondo era lo que
+   hacía que la primera parte se leyera como "una web" y la RA como "otra
+   aplicación".
+
+   Ahora el fondo NO cambia nunca. Portada, información y realidad aumentada
+   comparten el mismo azul profundo; lo único que cambia es qué hay dentro.
+   Al pulsar el botón no se navega a ninguna parte: el texto se aparta y la
+   cámara emerge en el campo que ya estaba ahí.
+
+   Consecuencia de diseño: no hay tarjetas, ni bordes, ni sombras de panel.
+   Un contenedor con borde y sombra es el gesto que grita "sitio web". El
+   contenido se apoya directamente sobre el fondo. */
+
+/* Tipografías autoalojadas (public/fonts). El fichero lo genera
+   scripts/descargar-fuentes.mjs; Vite lo integra en el build. */
+@import './fuentes.css';
+
+:root {
+  /* Azul institucional. 800 es el tono de cabecera de utpl.edu.ec; 900 es
+     más oscuro que cualquier azul de la UTPL, solo para el fondo del campo. */
+  --azul-900: #0a2540;
+  --azul-800: #0b3b6b;
+  --azul-700: #144e8c;
+
+  /* Dorado institucional, medido sobre el propio sitio (#FEBE10). */
+  --oro-500: #f5b400;
+  --oro-400: #ffc933;
+
+  --blanco: #ffffff;
+
+  /* Tinta sobre fondo oscuro. Los tres niveles cubren todo el texto del
+     sitio: título, cuerpo y letra pequeña. Ninguno baja del 60 % de opacidad
+     — por debajo de ahí el contraste falla al sol, y esta pieza se lee de
+     pie junto a un trofeo, no en una oficina. */
+  --tinta: #ffffff;
+  --tinta-media: rgba(255, 255, 255, 0.86);
+  --tinta-suave: rgba(255, 255, 255, 0.66);
+
+  --linea: rgba(255, 255, 255, 0.16);
+  --linea-fuerte: rgba(255, 255, 255, 0.28);
+  --foco: var(--oro-500);
+  --error: #ff9f97;
+
+  /* El campo. Mismo degradado que la portada de index.html: es lo que hace
+     que las tres capas se lean como una sola superficie continua. */
+  --campo: linear-gradient(180deg, #0b3b6b 0%, #072a4d 52%, #04182c 100%);
+
+  --radio-sm: 10px;
+  --radio-md: 14px;
+  --radio-lg: 20px;
+  --radio-pill: 999px;
+
+  --sombra-md: 0 8px 24px rgba(2, 12, 24, 0.45), 0 2px 6px rgba(2, 12, 24, 0.3);
+  --sombra-lg: 0 -12px 40px rgba(2, 12, 24, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* El atributo hidden debe ganar SIEMPRE, aunque una clase declare display.
+   Sin esto, .boton-ar (display: flex) se veía pese a estar oculto. */
+[hidden] {
+  display: none !important;
+}
+
+html {
+  /* El degradado se fija al html y no al body para que, al rebotar el
+     scroll en iOS, no asome una franja blanca por debajo del contenido. */
+  background: #04182c;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--campo);
+  background-attachment: fixed;
+  color: var(--tinta);
+  font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.sin-scroll {
+  overflow: hidden;
+}
+
+#app {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 2.25rem 1.35rem max(3rem, calc(env(safe-area-inset-bottom) + 2rem));
+}
+
+:where(button, a):focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 3px;
+  border-radius: var(--radio-sm);
+}
+
+/* ------------------------------------------------------------------ */
+/* Barra institucional                                                 */
+/* ------------------------------------------------------------------ */
+
+/* Idéntica a la barra de la portada (.bienvenida-barra): al apartarse la
+   portada, la barra que queda debajo es visualmente la misma, así que no se
+   percibe ningún cambio de pantalla. */
+.marca-utpl {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: max(0.7rem, env(safe-area-inset-top)) 1.15rem 0.7rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--linea);
+  color: var(--blanco);
+}
+
+.marca-utpl-nombre {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.marca-utpl-separador {
+  width: 1px;
+  height: 1.1rem;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.marca-utpl-programa {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tinta-media);
+  letter-spacing: 0.01em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cabecera: la felicitación                                           */
+/* ------------------------------------------------------------------ */
+
+.cabecera {
+  margin: 0 0 2.5rem;
+}
+
+/* Titular grande y sin caja. Es el momento de la felicitación: tiene que
+   ocupar la pantalla, no vivir dentro de un contenedor. */
+.cabecera-titulo {
+  margin: 0;
+  font-size: clamp(2.1rem, 10vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+.cabecera-subtitulo {
+  margin: 0.6rem 0 0;
+  color: var(--oro-500);
+  font-size: clamp(1rem, 4.4vw, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cabecera-texto {
+  margin: 1.4rem 0 0;
+  color: var(--tinta-media);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+/* ------------------------------------------------------------------ */
+/* La acción: entrar en la realidad aumentada                          */
+/* ------------------------------------------------------------------ */
+
+.entrada-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+
+/* Rótulo de sección. La línea que lo acompaña lo separa de la felicitación
+   sin necesidad de meter el bloque en una tarjeta. */
+.entrada-seccion {
+  margin: 0;
+  color: var(--tinta-media);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+/* Único elemento sólido de la pantalla. Todo lo demás es texto sobre el
+   fondo, así que el dorado macizo concentra toda la atención sin competir
+   con nada. */
+.boton-ar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.95rem 1.4rem;
+  border: 0;
+  border-radius: var(--radio-pill);
+  background: var(--oro-500);
+  color: #1a1200;
+  font: inherit;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(245, 180, 0, 0.22);
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.boton-ar svg {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.boton-ar:hover {
+  background: var(--oro-400);
+}
+
+.boton-ar:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 18px rgba(245, 180, 0, 0.18);
+}
+
+/* Nota informativa: qué hay que hacer. Lleva un filete dorado a la
+   izquierda en vez de un recuadro — señala sin encerrar. */
+.entrada-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin: 0.9rem 0 0;
+  padding: 0.15rem 0 0.15rem 0.9rem;
+  border-left: 2px solid rgba(245, 180, 0, 0.5);
+  color: var(--tinta-media);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.entrada-nota svg {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.18rem;
+  color: var(--oro-500);
+}
+
+/* Letra pequeña sobre la cámara. Está a la vista y no escondida tras un
+   desplegable: quien va a conceder el permiso tiene derecho a leer antes
+   qué se hace con él, sobre todo ahora que no hay pantalla intermedia. */
+.entrada-privacidad {
+  margin: 1.1rem 0 0;
+  color: var(--tinta-suave);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Salida sin cámara: enlace, no botón. No debe competir con la acción
+   principal, pero tiene que estar siempre — quien abre esto desde una
+   captura compartida no tiene la pieza delante y merece poder leer. */
+.entrada-alternativa {
+  display: inline-block;
+  margin: 1.6rem 0 0;
+  padding: 0.35rem 0;
+  border: 0;
+  background: none;
+  color: var(--tinta-media);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+
+.entrada-alternativa:hover {
+  color: var(--blanco);
+  text-decoration-color: var(--oro-500);
+}
+
+.estado-ar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 1.1rem 0 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radio-md);
+  background: rgba(255, 120, 110, 0.12);
+  border: 1px solid rgba(255, 120, 110, 0.3);
+  color: var(--error);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.estado-ar svg {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Hoja de créditos                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Sube desde abajo, tanto sobre la pantalla de información como sobre la
+   cámara. En RA el velo es traslúcido a propósito: la imagen se sigue
+   intuyendo detrás, así que leer los créditos no saca de la experiencia.
+
+   z-index 70: por encima de la capa de RA (50) y de la portada (60), porque
+   puede abrirse dentro de cualquiera de las dos. */
+.creditos {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.creditos-velo {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 14, 28, 0.72);
+  backdrop-filter: blur(3px);
+  animation: velo-entra 0.28s ease both;
+}
+
+@keyframes velo-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+.creditos-hoja {
+  position: relative;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  max-height: min(82dvh, 44rem);
+  display: flex;
+  flex-direction: column;
+  padding: 0.7rem 1.35rem max(1.6rem, calc(env(safe-area-inset-bottom) + 1rem));
+  border-top-left-radius: var(--radio-lg);
+  border-top-right-radius: var(--radio-lg);
+  border: 1px solid var(--linea);
+  border-bottom: 0;
+  /* Opaca de arriba a abajo pero con el azul del campo: la hoja pertenece
+     al mismo mundo que hay detrás, no es una ventana de otro sitio. */
+  background: linear-gradient(180deg, #0a3157 0%, #061f3a 100%);
+  box-shadow: var(--sombra-lg);
+  animation: creditos-entra 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes creditos-entra {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.creditos[data-saliendo] .creditos-hoja {
+  animation: creditos-sale 0.3s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.creditos[data-saliendo] .creditos-velo {
+  animation: velo-sale 0.3s ease both;
+}
+
+@keyframes creditos-sale {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes velo-sale {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creditos-hoja,
+  .creditos-velo,
+  .creditos[data-saliendo] .creditos-hoja,
+  .creditos[data-saliendo] .creditos-velo {
+    animation: none;
+  }
+}
+
+.creditos-asa {
+  display: block;
+  width: 2.6rem;
+  height: 4px;
+  margin: 0 auto 0.55rem;
+  border-radius: 2px;
+  background: var(--linea-fuerte);
+}
+
+/* z-index sobre la fila de pestañas: al ir en flujo normal y con márgenes
+   negativos, la fila se pintaba encima y se comía los toques del botón. */
+.creditos-cerrar {
+  position: absolute;
+  z-index: 2;
+  top: 0.75rem;
+  right: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--tinta-suave);
+  cursor: pointer;
+}
+
+.creditos-cerrar:hover {
+  color: var(--blanco);
+}
+
+.creditos-cerrar svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pestañas y paneles (dentro de la hoja)                              */
+/* ------------------------------------------------------------------ */
+
+.pestanas {
+  flex: none;
+  display: flex;
+  gap: 0.3rem;
+  margin: 0 -1.35rem;
+  /* El hueco de la derecha reserva sitio para el botón de cerrar, que flota
+     ahí encima: sin él, la última pestaña quedaría debajo del aspa. */
+  padding: 0 3.6rem 0 1.35rem;
+  border-bottom: 1px solid var(--linea);
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Difuminado en los bordes: avisa de que la fila sigue, sin barra de
+     desplazamiento y sin una sola línea de JS. */
+  mask-image: linear-gradient(to right, transparent, #000 1.35rem, #000 calc(100% - 3.6rem), transparent);
+}
+
+.pestanas::-webkit-scrollbar {
+  display: none;
+}
+
+.pestana {
+  flex: none;
+  padding: 0.85rem 0.75rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.pestana:hover {
+  color: var(--tinta-media);
+}
+
+.pestana[aria-selected='true'] {
+  color: var(--oro-500);
+  border-bottom-color: var(--oro-500);
+}
+
+.paneles {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.panel {
+  padding: 1.35rem 0 0.5rem;
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 4px;
+}
+
+.panel p {
+  margin: 0 0 0.9rem;
+  color: var(--tinta-media);
+  font-size: 0.95rem;
+  line-height: 1.62;
+}
+
+.panel-intro {
+  color: var(--tinta-suave) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.panel-retrato {
+  margin: 0 0 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.panel-retrato img {
+  display: block;
+  width: 8.5rem;
+  height: 8.5rem;
+  object-fit: cover;
+  object-position: center 18%;
+  border-radius: 50%;
+  border: 2px solid rgba(245, 180, 0, 0.55);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.panel-nombre {
+  margin: 0 0 0.55rem;
+  color: var(--blanco);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.panel:has(.panel-retrato) p,
+.panel:has(.panel-retrato) .enlaces a {
+  text-align: center;
+  justify-content: center;
+}
+
+.ficha {
+  margin: 0;
+}
+
+.ficha-fila {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 38%) 1fr;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--linea);
+}
+
+.ficha-fila:last-child {
+  border-bottom: 0;
+}
+
+.ficha-fila dt {
+  color: var(--tinta-suave);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ficha-fila dd {
+  margin: 0;
+  color: var(--tinta-media);
+  font-size: 0.93rem;
+}
+
+.pasos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: paso;
+}
+
+.pasos li {
+  position: relative;
+  padding: 0 0 0.9rem 2.2rem;
+  color: var(--tinta-media);
+  font-size: 0.95rem;
+  counter-increment: paso;
+}
+
+.pasos li::before {
+  content: counter(paso);
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  background: rgba(245, 180, 0, 0.16);
+  color: var(--oro-500);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.enlaces {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.enlaces li {
+  border-bottom: 1px solid var(--linea);
+}
+
+.enlaces li:last-child {
+  border-bottom: 0;
+}
+
+.enlaces a,
+.enlaces span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0.75rem 0;
+  color: var(--blanco);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.enlaces span {
+  color: var(--tinta-suave);
+  font-weight: 500;
+  justify-content: flex-start;
+}
+
+.enlaces a:hover {
+  color: var(--oro-500);
+}
+
+.enlaces-externo {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.55;
+}
+
+/* ------------------------------------------------------------------ */
+/* Error de carga del contenido                                        */
+/* ------------------------------------------------------------------ */
+
+.error-carga {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 2rem 0;
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--radio-md);
+  background: rgba(255, 120, 110, 0.12);
+  border: 1px solid rgba(255, 120, 110, 0.3);
+  color: var(--error);
+  font-size: 0.95rem;
+}
+
+.error-carga svg {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.1rem;
+}
+
+.error-carga-titulo {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+}
+
+.error-carga p {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Capa de realidad aumentada                                          */
+/* ------------------------------------------------------------------ */
+
+.ar-capa {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #000;
+  animation: capa-entra 0.22s ease both;
+}
+
+@keyframes capa-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-capa {
+    animation: none;
+  }
+}
+
+.ar-escena {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ar-escena a-scene {
+  position: absolute !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Barra superior contextual: quién es, y si está en vivo. Vive fuera del
+   flujo de vídeo 3D (que MindAR ancla a la placa) para que sea legible
+   siempre, apunte la cámara donde apunte. */
+.ar-cabecera {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: max(0.9rem, env(safe-area-inset-top)) 4.2rem 0.9rem 1.1rem;
+  background: linear-gradient(to bottom, rgba(6, 20, 36, 0.78), rgba(6, 20, 36, 0));
+  color: var(--blanco);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.ar-capa[data-estado='buscando'] .ar-cabecera,
+.ar-capa[data-estado='reproduciendo'] .ar-cabecera {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ar-cabecera-nombre {
+  font-weight: 800;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* Pie de la capa de RA: una sola columna anclada abajo que contiene, de
+   arriba abajo, el rescate, el botón de sonido y el mensaje de estado. Al
+   estar en flujo normal nunca se solapan entre sí, crezcan lo que crezcan. */
+.ar-pie {
+  position: absolute;
+  bottom: max(1.75rem, calc(env(safe-area-inset-bottom) + 1.25rem));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  width: min(90vw, 28rem);
+  /* La columna no debe capturar toques donde no hay nada: solo sus hijos
+     interactivos los reciben. */
+  pointer-events: none;
+}
+
+.ar-pie > * {
+  pointer-events: auto;
+}
+
+/* Mensaje de estado: píldora centrada, con icono propio por estado. */
+.ar-mensaje {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.65rem 1.15rem;
+  border-radius: var(--radio-pill);
+  background: rgba(10, 22, 38, 0.82);
+  backdrop-filter: blur(6px);
+  color: var(--blanco);
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 600;
+  box-shadow: var(--sombra-md);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ar-mensaje svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+  color: var(--oro-500);
+}
+
+/* En los estados de error el pie entero sube al centro y el mensaje gana
+   presencia. */
+.ar-capa[data-estado='error-camara'] .ar-pie,
+.ar-capa[data-estado='error-motor'] .ar-pie {
+  bottom: auto;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ar-capa[data-estado='error-camara'] .ar-mensaje,
+.ar-capa[data-estado='error-motor'] .ar-mensaje {
+  border-radius: var(--radio-md);
+  padding: 1.1rem 1.25rem;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.ar-capa[data-estado='error-camara'] .ar-mensaje svg,
+.ar-capa[data-estado='error-motor'] .ar-mensaje svg {
+  color: #ff8a80;
+  margin-top: 0.15rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Escáner: sustituye al retículo cuadrado por cuatro esquinas, como un   */
+/* lector de código profesional. Con línea de barrido sutil mientras     */
+/* busca y contracción a "confirmado" al encontrar.                      */
+/* ------------------------------------------------------------------ */
+
+.ar-escaner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  width: min(64vmin, 19rem);
+  aspect-ratio: 4 / 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.ar-capa[data-estado='buscando'] .ar-escaner {
+  opacity: 1;
+}
+
+.ar-escaner-esquina {
+  position: absolute;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 3px solid var(--oro-500);
+  transition: border-color 0.25s ease;
+}
+
+.ar-escaner-esquina:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: var(--radio-sm);
+}
+.ar-escaner-esquina:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-top-right-radius: var(--radio-sm);
+}
+.ar-escaner-esquina:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+  border-bottom-left-radius: var(--radio-sm);
+}
+.ar-escaner-esquina:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: var(--radio-sm);
+}
+
+/* Línea de barrido: solo mientras se busca, nunca al perder (evita que
+   "perdido" parezca que sigue escaneando activamente igual que al empezar). */
+.ar-escaner-linea {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--oro-500) 20%,
+    var(--oro-500) 80%,
+    transparent
+  );
+  box-shadow: 0 0 8px 1px rgba(245, 180, 0, 0.55);
+  opacity: 0;
+}
+
+.ar-capa[data-estado='buscando'] .ar-escaner-linea {
+  opacity: 1;
+  animation: barrido 2.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes barrido {
+  0% {
+    top: 6%;
+  }
+  50% {
+    top: 94%;
+  }
+  100% {
+    top: 6%;
+  }
+}
+
+/* Perdido: esquinas atenuadas en vez de desaparecer de golpe — se lee como
+   "seguimos aquí, reencuadra" y no como un fallo. */
+
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-escaner-linea {
+    animation: none;
+    opacity: 0.6;
+    top: 50%;
+  }
+}
+
+/* Botón de emergencia si el navegador bloqueó el audio. */
+.ar-activar-sonido {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.5rem 1.1rem;
+  border: 1.5px solid rgba(245, 180, 0, 0.7);
+  border-radius: var(--radio-pill);
+  background: rgba(10, 22, 38, 0.82);
+  color: var(--oro-500);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.ar-activar-sonido svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Los estilos del modo simulado (.ar-simular, .ar-camara-simulada) y del
+   panel de diagnóstico (.panel-diagnostico) viven en src/dev.css, que solo
+   se importa en desarrollo: no viajan al build de producción. */
+
+/* ------------------------------------------------------------------ */
+/* Rescate: salida sin cámara tras un rato buscando sin encontrar       */
+/* ------------------------------------------------------------------ */
+
+.ar-rescate {
+  width: 100%;
+  max-width: 24rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radio-md);
+  background: rgba(10, 22, 38, 0.9);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--sombra-md);
+  text-align: center;
+  animation: rescate-entra 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rescate-entra {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-rescate {
+    animation: none;
+  }
+}
+
+.ar-rescate-texto {
+  margin: 0 0 0.8rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ar-rescate-boton {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: var(--radio-pill);
+  background: var(--oro-500);
+  color: var(--azul-900);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ar-rescate-boton:active {
+  transform: translateY(1px);
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Portada de bienvenida                                               */
+/* ------------------------------------------------------------------ */
+
+/* Tapa la pantalla entera antes de que se vea el contenido. El marcado está
+   en index.html (para que esté pintada en el primer fotograma) y el
+   comportamiento en src/bienvenida.js.
+
+   Va en azul oscuro y no en el tema claro del resto del sitio a propósito:
+   es la portada del programa, el momento de marca, y se lee como el hero de
+   utpl.edu.ec. Al cerrarse, el contraste con el fondo claro de los créditos
+   refuerza que se ha entrado en otra cosa. */
+.bienvenida {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0b3b6b 0%, #072a4d 52%, #04182c 100%);
+  color: var(--blanco);
+  cursor: pointer;
+  overscroll-behavior: contain;
+  animation: bienvenida-entra 0.45s ease both;
+}
+
+/* Halo detrás del titular: da profundidad al degradado sin dibujar nada
+   figurativo. Puramente decorativo, así que no intercepta toques. */
+.bienvenida::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 120% 68% at 50% 38%,
+    rgba(64, 132, 205, 0.3),
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+@keyframes bienvenida-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Salida: el atributo lo pone bienvenida.js y el nodo se retira al terminar.
+   El leve zoom hace que la portada se "aparte" en vez de desvanecerse sin
+   más. pointer-events: none para que durante el fundido los toques ya lleguen
+   al contenido de debajo. */
+.bienvenida[data-saliendo] {
+  animation: bienvenida-sale 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+
+@keyframes bienvenida-sale {
+  to {
+    opacity: 0;
+    transform: scale(1.045);
+  }
+}
+
+/* Barra superior: el mismo bloque azul que la barra institucional, pero
+   sobre el degradado. Una línea fina basta para separarla; un segundo bloque
+   de color sólido rompería el degradado en dos. */
+.bienvenida-barra {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  padding: max(0.7rem, env(safe-area-inset-top)) 1.15rem 0.7rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.bienvenida-marca {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.bienvenida-centro {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+/* clamp() en vez de media queries: el titular ocupa el mismo porcentaje del
+   ancho en un móvil estrecho y en una pantalla grande, con topes para que ni
+   se rompa en dos líneas ni se desborde. */
+.bienvenida-titulo {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-size: clamp(2.7rem, 15.5vw, 5.5rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+.bienvenida-linea {
+  display: block;
+  animation: bienvenida-sube 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.1s;
+}
+
+.bienvenida-linea-oro {
+  color: var(--oro-500);
+  animation-delay: 0.22s;
+}
+
+.bienvenida-subtitulo {
+  margin: 0.9rem 0 0;
+  font-size: clamp(1rem, 4.4vw, 1.45rem);
+  font-weight: 500;
+  letter-spacing: 0.055em;
+  color: rgba(255, 255, 255, 0.9);
+  animation: bienvenida-sube 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.34s;
+}
+
+@keyframes bienvenida-sube {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* Llamada a la acción. Es un <button> de verdad —no un div con onclick— para
+   que reciba el foco, se anuncie en lectores de pantalla y responda a Intro
+   y Espacio sin código extra. El clic en cualquier otro punto de la portada
+   hace lo mismo; esto es la señal visible de que se puede. */
+.bienvenida-continuar {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: center;
+  margin: 0 auto max(2.25rem, calc(env(safe-area-inset-bottom) + 1.5rem));
+  padding: 0.8rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radio-pill);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  cursor: pointer;
+  animation: bienvenida-sube 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.5s;
+}
+
+/* El contenedor recibe el foco al abrir (ver bienvenida.js); no debe pintar
+   anillo por ello. El del botón sí se conserva para quien tabula. */
+.bienvenida:focus {
+  outline: none;
+}
+
+.bienvenida-continuar:focus-visible {
+  outline: 2px solid var(--oro-500);
+  outline-offset: 3px;
+}
+
+.bienvenida-raton {
+  width: 1.85rem;
+  height: 1.85rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  animation: bienvenida-bota 2.4s ease-in-out infinite;
+}
+
+/* La ruedecita baja dentro del ratón: dice "desplázate o toca" sin texto. */
+.bienvenida-raton-rueda {
+  animation: bienvenida-rueda 2.4s ease-in-out infinite;
+}
+
+@keyframes bienvenida-bota {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+@keyframes bienvenida-rueda {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.35;
+    transform: translateY(2.5px);
+  }
+}
+
+/* Con "reducir movimiento" la portada sigue funcionando igual: aparece,
+   se lee y se cierra. Solo se van las animaciones. */
+@media (prefers-reduced-motion: reduce) {
+  .bienvenida,
+  .bienvenida[data-saliendo],
+  .bienvenida-linea,
+  .bienvenida-subtitulo,
+  .bienvenida-continuar,
+  .bienvenida-raton,
+  .bienvenida-raton-rueda {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Controles de la capa de RA: volver y créditos                       */
+/* ------------------------------------------------------------------ */
+
+/* Los dos en la misma fila superior y con el mismo peso: son las dos
+   salidas de la experiencia, ninguna es "la principal". Van con texto y no
+   solo con icono porque de ellos depende no quedarse atrapado dentro. */
+.ar-controles {
+  position: absolute;
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+.ar-controles > * {
+  pointer-events: auto;
+}
+
+.ar-volver,
+.ar-creditos-boton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radio-pill);
+  background: rgba(6, 20, 36, 0.6);
+  backdrop-filter: blur(8px);
+  color: var(--blanco);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.ar-volver:hover,
+.ar-creditos-boton:hover {
+  background: rgba(6, 20, 36, 0.82);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.ar-volver svg,
+.ar-creditos-boton svg {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.ar-creditos-boton svg {
+  color: var(--oro-500);
+}
+
+/* La barra con el nombre del docente comparte fila con los controles, así
+   que baja para no solaparse con ellos. */
+.ar-cabecera {
+  top: max(3.6rem, calc(env(safe-area-inset-top) + 3rem));
+  padding-right: 1.1rem;
+  background: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Entrada en foco de la cámara                                        */
+/* ------------------------------------------------------------------ */
+
+/* La imagen de la cámara aparece difuminada y se enfoca mientras arranca el
+   trackeo. Ocupa el hueco que antes era una pantalla negra esperando: en vez
+   de una carga, se ve el mundo real "revelando".
+
+   Las clases las pone y las quita ar.js (enfocarCamara) sobre el <video> que
+   crea MindAR. Se retiran al terminar para no dejar al navegador componiendo
+   un filtro sobre cada fotograma durante toda la sesión. */
+/* Estado inicial: borroso YA, sin transición. Si la transición se declarara
+   aquí, el navegador animaría también la ENTRADA en el desenfoque (de nítido
+   a borroso) y el efecto quedaría en un temblor en vez de en un enfoque. */
+.ar-camara-entrando {
+  filter: blur(24px) saturate(0.5) brightness(0.72);
+  transform: scale(1.06);
+}
+
+/* La transición vive en el estado final: al añadirse esta clase, el
+   navegador lee de aquí cómo llegar hasta ella, y solo entonces anima. */
+.ar-camara-entrando.ar-camara-enfocada {
+  filter: blur(0) saturate(1) brightness(1);
+  transform: scale(1);
+  transition: filter 1.15s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Mientras la cámara aún se enfoca, el escáner todavía no debe estar
+   dibujado: primero se revela el mundo, luego aparece el instrumento. */
+.ar-capa[data-estado='cargando'] .ar-escaner {
+  opacity: 0;
+}
+
+/* A-Frame inyecta su propio botón de pantalla completa en la esquina, pese a
+   llevar vr-mode-ui desactivado (ese ajuste solo cubre el botón de RV). En
+   esta experiencia no pinta nada: la capa ya ocupa toda la pantalla y ese
+   icono suelto rompe la composición. */
+.ar-capa .a-enter-vr,
+.ar-capa .a-enter-vr-button,
+.ar-capa .a-enter-ar,
+.ar-capa .a-enter-ar-button {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reproductor: el vídeo, una vez que la placa lo ha desbloqueado       */
+/* ------------------------------------------------------------------ */
+
+/* La cámara sigue NÍTIDA mientras se reproduce. Antes se desenfocaba mucho,
+   cuando el vídeo era un rectángulo opaco y había que apartar el mundo real
+   para que se leyera. Ahora el fondo negro está recortado y el docente flota
+   sobre lo que la cámara ve de verdad: ocultar ese fondo destruiría el
+   efecto, que es justo lo que hace que esto sea realidad aumentada.
+   Solo se rebaja un punto el brillo, lo justo para que una mesa muy clara no
+   compita con la figura. */
+.ar-capa[data-estado='reproduciendo'] .ar-escena video,
+.ar-capa[data-estado='reproduciendo'] .ar-escena canvas {
+  filter: none;
+}
+
+.ar-reproductor {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: max(3.5rem, calc(env(safe-area-inset-top) + 2.75rem)) 0.65rem
+    max(0.75rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  pointer-events: none;
+}
+
+.ar-reproductor-columna {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  pointer-events: none;
+  container-type: size;
+}
+
+/* Marco 16:9 y peana de créditos comparten ancho. El ancho se deriva de la
+   fracción de altura que ocupa la zona de vídeo, para no desbordar el contain. */
+.ar-reproductor-pieza {
+  --peana-solape: 10px;
+  --zona-flex: 1.7;
+  --info-flex: 0.65;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: min(100%, calc(100cqh * var(--zona-flex) / (var(--zona-flex) + var(--info-flex)) * 16 / 9));
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  pointer-events: none;
+}
+
+.ar-reproductor-video-zona {
+  flex: 1.7 1 0;
+  min-height: 0;
+  display: grid;
+  justify-items: center;
+  align-items: end;
+  pointer-events: none;
+  container-type: size;
+  position: relative;
+  z-index: 2;
+}
+
+/* El marco es la caja visible 16:9 (mitad de color del MP4 empaquetado).
+   100cqw/100cqh recortan al máximo que cabe SIN deformar. No se combina
+   height: 100% con aspect-ratio. */
+.ar-reproductor-marco {
+  position: relative;
+  width: 100%;
+  height: auto;
+  width: min(100cqw, calc(100cqh * 16 / 9));
+  height: min(100cqh, calc(100cqw * 9 / 16));
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0;
+  overflow: visible;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  pointer-events: auto;
+  animation: reproductor-entra 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ar-reproductor-marco[data-transparente] {
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.35));
+}
+
+/* Fallback si WebGL no está disponible: el fondo del clip es negro puro. */
+.ar-reproductor-marco[data-fallback-pantalla] .ar-reproductor-video {
+  mix-blend-mode: screen;
+  position: relative;
+  z-index: 1;
+}
+
+/* El lienzo llena el marco 16:9; contain evita estirar si el clip no es exacto. */
+.ar-lienzo-video {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Con recorte, el <video> deja de verse: la imagen sale del lienzo y él solo
+   aporta los fotogramas y el audio. No se usa display:none ni visibility:
+   hidden porque en iOS un vídeo así no reproduce. */
+.ar-reproductor-marco[data-transparente] .ar-reproductor-video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes reproductor-entra {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-reproductor-marco {
+    animation: none;
+  }
+  .ar-capa[data-estado='reproduciendo'] .ar-escena video,
+  .ar-capa[data-estado='reproduciendo'] .ar-escena canvas {
+    transition: none;
+  }
+}
+
+.ar-reproductor-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+}
+
+/* Capa transparente sobre el vídeo: toca en cualquier punto para pausar o
+   reanudar. Es un <button> real, así que también responde al teclado. */
+.ar-reproductor-toque {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Botón central. Mientras se reproduce se desvanece para no taparle la cara
+   al docente; reaparece al pausar, al terminar o al pasar el cursor. */
+.ar-reproductor-central {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radio-pill);
+  background: rgba(6, 20, 36, 0.72);
+  backdrop-filter: blur(8px);
+  color: var(--blanco);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.ar-reproductor-central-icono {
+  display: flex;
+}
+
+.ar-reproductor-central-icono svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* Reproduciendo: fuera de la vista pero accesible con el teclado (no se usa
+   display:none, que lo sacaría del orden de tabulación). */
+.ar-reproductor[data-reproduccion='reproduciendo'] .ar-reproductor-central {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.ar-reproductor[data-reproduccion='reproduciendo'] .ar-reproductor-central:hover,
+.ar-reproductor[data-reproduccion='reproduciendo'] .ar-reproductor-central:focus-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Al terminar, el botón se hace dorado: es la invitación a repetir, y el
+   único elemento activo de la pantalla en ese momento. */
+.ar-reproductor[data-reproduccion='terminado'] .ar-reproductor-central {
+  background: var(--oro-500);
+  border-color: transparent;
+  color: #1a1200;
+}
+
+/* Progreso: una línea fina, informativa. Sin arrastre — en una pieza de 80
+   segundos que se ve una vez, una barra de búsqueda añade complejidad y
+   superficie de error sin aportar nada. */
+/* Va al fondo de la pantalla, no pegada al vídeo: con la figura recortada no
+   hay ningún borde al que agarrarse, y una línea a media altura cruzaría la
+   escena. Aquí se lee como el progreso de la experiencia. */
+.ar-reproductor-progreso {
+  position: relative;
+  flex: none;
+  width: 100%;
+  margin-top: 0.35rem;
+  height: 3px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+/* Peana: la caja de créditos es la base visual del docente. El canvas
+   transparente deja ver este fondo; los píxeles opacos quedan delante. */
+.ar-creditos-inline {
+  flex: 0.65 1 0;
+  min-height: 0;
+  max-height: 42%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: calc(-1 * var(--peana-solape, 10px));
+  padding: calc(0.55rem + var(--peana-solape, 10px)) 0.75rem 0.45rem;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 49, 87, 0.45) 0,
+    #0a3157 14px,
+    #061f3a 100%
+  );
+  border: 0;
+  border-radius: 8px 8px var(--radio-lg) var(--radio-lg);
+  box-shadow: none;
+  pointer-events: auto;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-height: 740px) {
+  .ar-reproductor-pieza {
+    --zona-flex: 2.4;
+    --info-flex: 0.4;
+  }
+
+  .ar-reproductor-video-zona {
+    flex: 2.4 1 0;
+  }
+
+  .ar-creditos-inline {
+    flex: 0.4 1 0;
+    max-height: 34%;
+    gap: 0.3rem;
+    padding-top: calc(0.25rem + var(--peana-solape, 10px));
+  }
+
+  .ar-creditos-inline .panel-retrato img {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .ar-cabecera-nombre {
+    font-size: 0.82rem;
+  }
+
+  .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
+    --zona-flex: 1.35;
+    --info-flex: 1.05;
+  }
+
+  .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
+    flex: 1.35 1 0;
+  }
+
+  .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
+    flex: 1.05 1 0;
+    max-height: 52%;
+  }
+}
+
+@media (max-height: 640px) {
+  .ar-creditos-inline {
+    max-height: 28%;
+  }
+
+  .ar-creditos-inline .panel-retrato {
+    display: none;
+  }
+
+  .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
+    max-height: 46%;
+  }
+}
+
+.ar-creditos-inline .pestanas {
+  flex: none;
+  gap: 0.35rem;
+}
+
+.ar-creditos-inline .pestana {
+  flex: 1;
+  min-height: 36px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+.ar-creditos-inline .paneles {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.15rem;
+}
+
+.ar-creditos-inline .panel {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+}
+
+.ar-creditos-inline .panel-intro {
+  margin-bottom: 0.45rem;
+  color: var(--oro-400);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ar-creditos-inline .panel-retrato img {
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+.ar-creditos-inline .panel-nombre {
+  font-size: 0.92rem;
+}
+
+.ar-creditos-inline .panel p {
+  margin: 0 0 0.55rem;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ar-creditos-inline .enlaces a,
+.ar-creditos-inline .enlaces span {
+  font-size: 0.84rem;
+}
+
+
+
+.ar-reproductor-progreso-barra {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--oro-500);
+  transition: width 0.25s linear;
+}
+
+/* Reproducción: subir vídeo + peana; el nombre ya está en la pestaña Artista. */
+.ar-capa[data-estado='reproduciendo'] .ar-cabecera {
+  display: none;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-reproductor {
+  padding-top: max(2.25rem, calc(env(safe-area-inset-top) + 1.75rem));
+  padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-reproductor-columna {
+  justify-content: flex-start;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
+  --zona-flex: 1.45;
+  --info-flex: 0.95;
+  transform: translateY(-1.25rem);
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
+  flex: 1.45 1 0;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-reproductor-progreso {
+  margin-top: 0.15rem;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
+  flex: 0.95 1 0;
+  max-height: 52%;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .paneles {
+  position: relative;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-creditos-inline::after {
+  content: '';
+  position: absolute;
+  bottom: 0.45rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  height: 1.25rem;
+  background: linear-gradient(to bottom, transparent, #061f3a);
+  pointer-events: none;
+}
+
+/* Con el vídeo en pantalla, el escáner y el mensaje de "apunta a la placa"
+   sobran: su trabajo ya está hecho. */
+.ar-capa[data-estado='reproduciendo'] .ar-escaner,
+.ar-capa[data-estado='reproduciendo'] .ar-pie {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+/* …salvo el botón de sonido, que justo entonces es cuando puede hacer falta. */
+.ar-capa[data-estado='reproduciendo'] .ar-pie:has(.ar-activar-sonido:not([hidden])) {
+  opacity: 1;
+  pointer-events: auto;
+}

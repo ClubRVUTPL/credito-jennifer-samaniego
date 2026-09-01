@@ -1,0 +1,82 @@
+{
+  "placa": {
+    "etiqueta": "Primer lugar · Innova Docente Inter Universidades · UTPL 2026",
+    "titulo": "Más información"
+  },
+  "docente": {
+    "nombre": "Jennifer Betzabe Samaniego Franco",
+    "rol": "Docente y coordinadora de innovación tecnopedagógica"
+  },
+  "entrada": {
+    "titulo": "¡FELICITACIONES!",
+    "subtitulo": "Has dejado una huella en Innova Docente UTPL 2026",
+    "texto": "Hoy formas parte de Innova Docente UTPL 2026, una iniciativa que reconoce a docentes que se atreven a transformar sus formas de enseñar, generar nuevas experiencias de aprendizaje y dejar una huella en sus estudiantes y contextos.",
+    "seccion": "Explora «Ala del Conocimiento» y conoce a la docente detrás de esta pieza.",
+    "nota": "Para ver esta experiencia en realidad aumentada, haz clic en el botón y escanea la base de la placa.",
+    "privacidad": "",
+    "alternativa": "Leer más información sin cámara",
+    "navegadorEmbebido": "Estás viendo esta página dentro de otra aplicación, y ahí la cámara no está disponible. Ábrela en tu navegador (Safari o Chrome) para ver la experiencia en realidad aumentada."
+  },
+  "pestanas": [
+    {
+      "id": "artista",
+      "titulo": "Artista",
+      "tipo": "parrafos",
+      "retrato": "/media/jennifer-samaniego-retrato.jpg",
+      "retratoAlt": "Jennifer Betzabe Samaniego Franco",
+      "nombre": "Jennifer Betzabe Samaniego Franco",
+      "parrafos": [
+        "Coordinadora de Innovación Tecnopedagógica en la UTPL. Responsable del Laboratorio XR LAB y del Club Universitario de Realidad Virtual."
+      ],
+      "enlaces": [
+        {
+          "texto": "jsamaniego@utpl.edu.ec",
+          "url": "mailto:jsamaniego@utpl.edu.ec"
+        }
+      ]
+    },
+    {
+      "id": "proceso",
+      "titulo": "Proceso",
+      "tipo": "parrafos",
+      "intro": "Ala del Conocimiento",
+      "parrafos": [
+        "Su silueta ascendente, inspirada en un ala, una llama y una hoja, evoca el crecimiento y el vuelo hacia nuevas posibilidades. Sus líneas estriadas representan la huella del artesano, el oficio y la memoria que permanecen presentes en cada proceso de transformación.",
+        "Las perforaciones que se van integrando progresivamente representan la transición de lo manual y analógico hacia lo digital, mostrando cómo la innovación evoluciona sin perder sus raíces.",
+        "La red de nodos simboliza la conexión entre docentes, estudiantes, ideas y tecnología. En su centro, el sello dorado se convierte en un punto de encuentro y equilibrio entre todos estos elementos.",
+        "La base de madera representa la raíz y la estabilidad; la placa, el reconocimiento a quienes transforman la educación; y el código QR conecta la pieza física con una nueva experiencia digital.",
+        "«Ala del Conocimiento» nace de la tradición, se conecta con la tecnología y se proyecta hacia el futuro, como un reconocimiento a quienes hacen de la innovación una forma de transformar la educación."
+      ]
+    }
+  ],
+  "ar": {
+    "marcador": "/ar/targets.mind",
+    "video": {
+      "720": "/media/jennifer-samaniego-720.mp4",
+      "480": "/media/jennifer-samaniego-480.mp4"
+    },
+    "poster": "/media/jennifer-samaniego-cartel.jpg",
+    "boton": "Clic aquí",
+    "cerrar": "Volver",
+    "creditos": "Más información",
+    "activarSonido": "Activar sonido",
+    "rescate": {
+      "texto": "¿No tienes la placa delante? Puedes leer más información sin cámara.",
+      "boton": "Más información"
+    },
+    "mensajes": {
+      "cargando": "Preparando la cámara",
+      "buscando": "Apunta a la placa dorada del trofeo",
+      "error-camara": "No se pudo acceder a la cámara. Revisa los permisos del navegador para este sitio e inténtalo de nuevo.",
+      "error-motor": "No se pudo cargar el visor de realidad aumentada. Comprueba la conexión, cierra y vuelve a intentarlo.",
+      "reproduciendo": ""
+    },
+    "reproductor": {
+      "pausar": "Pausar",
+      "reanudar": "Reanudar",
+      "verDeNuevo": "Ver de nuevo",
+      "cargando": "Cargando el vídeo…",
+      "error": "No se pudo reproducir el vídeo. Comprueba la conexión e inténtalo de nuevo."
+    }
+  }
+}

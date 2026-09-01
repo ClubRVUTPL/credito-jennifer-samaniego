@@ -1,0 +1,15 @@
+Tipografías autoalojadas en este directorio:
+
+  - Montserrat (Julieta Ulanovsky, Sol Matas, Juan Pablo del Peral,
+    Jacques Le Bailly — publicada por Google Fonts). Es la tipografía de la
+    identidad institucional de la UTPL: se usa en los tres pesos que necesita
+    la interfaz (400 texto, 600 énfasis, 800 titulares).
+  - IBM Plex Mono (IBM). Solo para el panel de diagnóstico de desarrollo
+    (src/dev.css), que no viaja al build de producción.
+
+Ambas se distribuyen bajo la SIL Open Font License 1.1:
+https://openfontlicense.org
+
+Descargadas con scripts/descargar-fuentes.mjs (subconjuntos latín y latín
+extendido). Para cambiar pesos o familias, editar ese script y volver a
+ejecutarlo.

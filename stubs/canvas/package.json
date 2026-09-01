@@ -1,0 +1,6 @@
+{
+  "name": "canvas",
+  "version": "0.0.0",
+  "description": "Stub local del paquete nativo 'canvas'. mind-ar lo declara como dependencia pero solo lo usa su tooling de Node, nunca los bundles de navegador que importa este proyecto. El paquete real exige compilar código nativo (GTK/MSBuild) y rompe npm install en Windows. Ver 'overrides' en el package.json raíz.",
+  "main": "index.js"
+}

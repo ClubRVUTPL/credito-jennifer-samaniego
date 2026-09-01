@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Generador de la placa (herramienta de desarrollo)</title>
+    <!--
+      Dibuja en un canvas la placa conmemorativa que sirve de MARCADOR para
+      MindAR. No es la placa definitiva del trofeo: es una imagen de prueba
+      con las propiedades que necesita el tracking (mucho texto, contraste
+      alto y ornamento distinto en cada esquina, sin patrones repetitivos).
+      La ejecuta scripts/generar-placa.mjs en headless; también puede abrirse
+      a mano para retocar el diseño.
+    -->
+  </head>
+  <body style="margin: 0; background: #222">
+    <canvas id="placa" width="1200" height="900"></canvas>
+    <script>
+      const canvas = document.getElementById('placa');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // PRNG con semilla fija: la placa generada es siempre idéntica, así el
+      // targets.mind compilado sigue valiendo aunque se regenere el JPEG.
+      function mulberry32(seed) {
+        return function () {
+          seed |= 0;
+          seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(50);
+
+      /* ── Fondo de bronce ── */
+      const fondo = ctx.createLinearGradient(0, 0, W, H);
+      fondo.addColorStop(0, '#6b4a22');
+      fondo.addColorStop(0.5, '#8a6430');
+      fondo.addColorStop(1, '#5a3d1e');
+      ctx.fillStyle = fondo;
+      ctx.fillRect(0, 0, W, H);
+
+      // Moteado tipo martillado: puntos aleatorios claros y oscuros. Da a
+      // MindAR textura fina no repetitiva por toda la superficie.
+      for (let i = 0; i < 6000; i++) {
+        const x = rand() * W;
+        const y = rand() * H;
+        const r = 0.5 + rand() * 1.8;
+        const claro = rand() > 0.5;
+        ctx.fillStyle = claro
+          ? `rgba(220, 185, 120, ${0.04 + rand() * 0.1})`
+          : `rgba(30, 18, 6, ${0.04 + rand() * 0.12})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Vetas: trazos curvos suaves, cada uno distinto.
+      for (let i = 0; i < 24; i++) {
+        ctx.strokeStyle = `rgba(${rand() > 0.5 ? '210,170,110' : '40,24,8'}, ${0.05 + rand() * 0.07})`;
+        ctx.lineWidth = 0.6 + rand() * 1.4;
+        ctx.beginPath();
+        const x0 = rand() * W;
+        const y0 = rand() * H;
+        ctx.moveTo(x0, y0);
+        ctx.bezierCurveTo(
+          x0 + (rand() - 0.5) * 400, y0 + (rand() - 0.5) * 200,
+          x0 + (rand() - 0.5) * 400, y0 + (rand() - 0.5) * 200,
+          x0 + (rand() - 0.5) * 600, y0 + (rand() - 0.5) * 300
+        );
+        ctx.stroke();
+      }
+
+      /* ── Marco doble grabado ── */
+      ctx.strokeStyle = '#e8c979';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(28, 28, W - 56, H - 56);
+      ctx.strokeStyle = '#2a1a08';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, W - 80, H - 80);
+      ctx.strokeStyle = '#e8c979';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(52, 52, W - 104, H - 104);
+
+      /* ── Texto grabado (sombra oscura + relieve claro) ── */
+      function grabar(texto, x, y, fuente, color = '#f3dfa5') {
+        ctx.font = fuente;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(20, 10, 2, 0.9)';
+        ctx.fillText(texto, x + 3, y + 3);
+        ctx.fillStyle = color;
+        ctx.fillText(texto, x, y);
+      }
+
+      grabar('50 AÑOS', W / 2, 240, '900 150px Georgia, serif');
+      grabar('MODALIDAD ABIERTA Y A DISTANCIA', W / 2, 350, 'bold 46px Georgia, serif');
+      grabar('UNIVERSIDAD TÉCNICA PARTICULAR DE LOJA', W / 2, 425, 'bold 37px Georgia, serif');
+      grabar('1976 — 2026', W / 2, 510, 'bold 44px Georgia, serif');
+
+      // Línea divisoria con rombo central.
+      ctx.strokeStyle = '#e8c979';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(200, 555);
+      ctx.lineTo(W / 2 - 30, 555);
+      ctx.moveTo(W / 2 + 30, 555);
+      ctx.lineTo(W - 200, 555);
+      ctx.stroke();
+      ctx.fillStyle = '#e8c979';
+      ctx.beginPath();
+      ctx.moveTo(W / 2, 543);
+      ctx.lineTo(W / 2 + 14, 555);
+      ctx.lineTo(W / 2, 567);
+      ctx.lineTo(W / 2 - 14, 555);
+      ctx.closePath();
+      ctx.fill();
+
+      grabar('OBRA CONMEMORATIVA', W / 2, 625, 'bold 34px Georgia, serif');
+      grabar('Escanea el código para conocer los créditos del artista', W / 2, 680, 'italic 27px Georgia, serif', '#e0c98f');
+      grabar('LOJA · ECUADOR', W / 2, 800, 'bold 30px Georgia, serif');
+
+      /* ── Esquinas: cuatro ornamentos DISTINTOS (anti-simetría) ── */
+
+      // Superior izquierda: rama de laurel.
+      (function laurel() {
+        ctx.save();
+        ctx.translate(120, 130);
+        ctx.strokeStyle = '#e8c979';
+        ctx.fillStyle = '#d9b25f';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-40, 60);
+        ctx.quadraticCurveTo(30, -10, 120, -45);
+        ctx.stroke();
+        for (let i = 0; i < 8; i++) {
+          const t = i / 7;
+          const x = -40 + t * 150;
+          const y = 60 - t * 100 + 12 * Math.sin(t * 6);
+          const ang = -0.6 - t * 0.5 + (i % 2 ? 1.4 : -1.4);
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(ang);
+          ctx.beginPath();
+          ctx.ellipse(0, -14, 7 + i, 16, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+      })();
+
+      // Superior derecha: sol con rayos desiguales.
+      (function sol() {
+        ctx.save();
+        ctx.translate(W - 130, 135);
+        ctx.fillStyle = '#f3dfa5';
+        ctx.strokeStyle = '#f3dfa5';
+        ctx.beginPath();
+        ctx.arc(0, 0, 34, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 5;
+        for (let i = 0; i < 14; i++) {
+          const ang = (i / 14) * Math.PI * 2;
+          const largo = i % 2 ? 28 : 48; // rayos alternos: rompe la simetría fina
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(ang) * 42, Math.sin(ang) * 42);
+          ctx.lineTo(Math.cos(ang) * (42 + largo), Math.sin(ang) * (42 + largo));
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#5a3d1e';
+        ctx.beginPath();
+        ctx.arc(-10, -6, 5, 0, Math.PI * 2);
+        ctx.arc(12, -4, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      })();
+
+      // Inferior izquierda: libro abierto.
+      (function libro() {
+        ctx.save();
+        ctx.translate(140, H - 130);
+        ctx.strokeStyle = '#e8c979';
+        ctx.fillStyle = 'rgba(243, 223, 165, 0.25)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.quadraticCurveTo(-55, -35, -95, -15);
+        ctx.lineTo(-95, 35);
+        ctx.quadraticCurveTo(-55, 15, 0, 40);
+        ctx.quadraticCurveTo(55, 15, 95, 35);
+        ctx.lineTo(95, -15);
+        ctx.quadraticCurveTo(55, -35, 0, -10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.lineWidth = 2;
+        for (let i = 1; i <= 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-80, -12 + i * 12);
+          ctx.quadraticCurveTo(-45, -28 + i * 12, -12, -6 + i * 12);
+          ctx.moveTo(12, -6 + i * 12);
+          ctx.quadraticCurveTo(45, -28 + i * 12, 80, -12 + i * 12);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(0, 40);
+        ctx.stroke();
+        ctx.restore();
+      })();
+
+      // Inferior derecha: perfil de montañas con camino.
+      (function montanas() {
+        ctx.save();
+        ctx.translate(W - 250, H - 100);
+        ctx.strokeStyle = '#e8c979';
+        ctx.fillStyle = 'rgba(243, 223, 165, 0.2)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(35, -55);
+        ctx.lineTo(62, -22);
+        ctx.lineTo(95, -78);
+        ctx.lineTo(130, -30);
+        ctx.lineTo(155, -48);
+        ctx.lineTo(185, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([7, 6]);
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.quadraticCurveTo(70, -20, 95, -74);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      })();
+
+      /* ── Tornillos de fijación: uno por esquina, cada uno girado distinto ── */
+      [[70, 70, 0.3], [W - 70, 70, 1.2], [70, H - 70, 2.1], [W - 70, H - 70, 0.7]].forEach(
+        ([x, y, giro]) => {
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(giro);
+          const brillo = ctx.createRadialGradient(-3, -3, 1, 0, 0, 12);
+          brillo.addColorStop(0, '#f7e7b5');
+          brillo.addColorStop(1, '#7a5a28');
+          ctx.fillStyle = brillo;
+          ctx.beginPath();
+          ctx.arc(0, 0, 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#2a1a08';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(-8, 0);
+          ctx.lineTo(8, 0);
+          ctx.stroke();
+          ctx.restore();
+        }
+      );
+
+      // Señal para el script headless + exportación a JPEG.
+      window.__placaJpeg = () => canvas.toDataURL('image/jpeg', 0.92);
+      window.__placaLista = true;
+    </script>
+  </body>
+</html>

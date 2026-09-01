@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Banco del compositor WebGL crudo</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #14120f;
+        color: #f2ede4;
+      }
+      header {
+        padding: 1rem;
+        max-width: 56rem;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.15rem;
+      }
+      p {
+        margin: 0.25rem 0;
+        color: #b3aa9b;
+        font-size: 0.9rem;
+      }
+      code {
+        background: #262219;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .visor {
+        max-width: 56rem;
+        margin: 0 auto 1.5rem;
+        background: repeating-conic-gradient(#4a4438 0% 25%, #2b2721 0% 50%) 0 0 / 32px 32px;
+        border-radius: 12px;
+        overflow: hidden;
+        min-height: 200px;
+      }
+      .visor canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      #estado {
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Compositor WebGL crudo · MP4 empaquetado</h1>
+      <p>
+        Correcto: docente <strong>a color</strong> sobre el damero, sin silueta blanca ni llama
+        blanca. Herramienta de desarrollo; no entra en el build.
+      </p>
+      <p id="estado">Cargando…</p>
+    </header>
+    <div class="visor" id="visor"></div>
+    <script type="module">
+      import { crearVideoTransparente } from '/src/video-transparente.js';
+
+      const video = document.createElement('video');
+      video.src = '/media/jennifer-samaniego-720.mp4';
+      video.muted = true;
+      video.playsInline = true;
+      video.loop = true;
+      video.preload = 'auto';
+
+      const estado = document.querySelector('#estado');
+      const visor = document.querySelector('#visor');
+
+      video.addEventListener('error', () => {
+        estado.textContent = 'No se pudo cargar /media/jennifer-samaniego-720.mp4';
+      });
+
+      await new Promise((res) => {
+        video.addEventListener('loadeddata', res, { once: true });
+      });
+
+      const t = crearVideoTransparente(video, { preserveDrawingBuffer: true });
+      if (!t) {
+        estado.textContent = 'WebGL no disponible';
+      } else {
+        visor.appendChild(t.canvas);
+        t.iniciar();
+        await video.play().catch(() => {});
+        const marcar = () => {
+          estado.textContent =
+            `empaquetado=${t.empaquetado} · mascaraArriba=${t.mascaraArriba} · ` +
+            `lienzo ${t.canvas.width}×${t.canvas.height}`;
+        };
+        marcar();
+        setInterval(marcar, 500);
+      }
+    </script>
+  </body>
+</html>

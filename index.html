@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- El título se sobreescribe desde contenido/contenido.json al cargar. -->
+    <title>Créditos</title>
+    <!-- Color de la barra del navegador en Android/iOS: el azul institucional,
+         para que hasta el cromo del sistema operativo lea "UTPL" antes de que
+         cargue una sola línea de CSS. -->
+    <meta name="theme-color" content="#0b3b6b" />
+    <!-- Favicon en línea: evita una petición 404 en la consola. Punto dorado
+         sobre disco azul institucional — mismos dos colores que el resto. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230B3B6B'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%23FEBE10'/%3E%3C/svg%3E"
+    />
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <!-- Portada. Va en el HTML y no en un módulo por una razón concreta: así
+         está pintada en el primer fotograma, antes de que se ejecute una sola
+         línea de JS. Montándola desde main.js se vería un destello de la
+         página de créditos justo antes de taparla.
+
+         Los textos son marca del programa (igual que la barra UTPL de abajo),
+         no contenido de la ficha, así que quedan fuera de contenido.json por
+         el mismo criterio. El comportamiento —cerrar al tocar, con teclado o
+         solo tras unos segundos— vive en src/bienvenida.js. -->
+    <!-- tabindex="-1": el foco al abrir va al contenedor, no al botón. Es el
+         patrón habitual de diálogo (mete al lector de pantalla dentro de la
+         portada) y evita que el botón se pinte con su anillo de foco sin que
+         nadie lo haya tabulado. -->
+    <div
+      id="bienvenida"
+      class="bienvenida"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bienvenida-titulo"
+      tabindex="-1"
+    >
+      <header class="bienvenida-barra">
+        <span class="bienvenida-marca">UTPL</span>
+      </header>
+
+      <div class="bienvenida-centro">
+        <h1 class="bienvenida-titulo" id="bienvenida-titulo">
+          <span class="bienvenida-linea">INNOVA</span>
+          <span class="bienvenida-linea bienvenida-linea-oro">DOCENTE</span>
+        </h1>
+        <p class="bienvenida-subtitulo">Inter Universidades</p>
+      </div>
+
+      <button type="button" class="bienvenida-continuar" id="bienvenida-continuar">
+        <svg class="bienvenida-raton" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="6.6" y="2" width="10.8" height="20" rx="5.4" />
+          <path class="bienvenida-raton-rueda" d="M12 6.2v3.4" />
+        </svg>
+        <span>Click para continuar</span>
+      </button>
+    </div>
+
+    <!-- Barra institucional: marcado fijo, no viene de contenido.json.
+         La regla "todo texto visible sale del JSON" es para el CONTENIDO de
+         los créditos; esto es identidad de marca de la propia UTPL, estable
+         y ajena al contenido de cada ficha. Vive fuera de #app para que se
+         pinte de inmediato, antes de que main.js cargue nada. -->
+    <header class="marca-utpl">
+      <span class="marca-utpl-nombre">UTPL</span>
+      <span class="marca-utpl-separador" aria-hidden="true"></span>
+      <span class="marca-utpl-programa">Innova Docente</span>
+    </header>
+    <div id="app"></div>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "name": "credito-jennifer-samaniego",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Créditos del artista de la placa conmemorativa, con capa opcional de realidad aumentada",
+  "scripts": {
+    "dev": "vite --host",
+    "prebuild": "node scripts/comprobar-contenido.mjs",
+    "build": "vite build",
+    "prebuild:prototipo": "cross-env PERMITIR_RELLENO=1 node scripts/comprobar-contenido.mjs",
+    "build:prototipo": "cross-env PERMITIR_RELLENO=1 vite build",
+    "preview": "vite preview --host",
+    "comprobar:contenido": "node scripts/comprobar-contenido.mjs",
+    "comprobar:transparencia": "node scripts/comprobar-transparencia.mjs",
+    "comprobar": "node scripts/comprobar-ui.mjs",
+    "tunel": "cloudflared tunnel --url http://localhost:5173"
+  },
+  "dependencies": {
+    "aframe": "~1.5.0",
+    "mind-ar": "^1.2.5"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "vite": "^5.4.0"
+  },
+  "overrides": {
+    "canvas": "file:./stubs/canvas"
+  }
+}
