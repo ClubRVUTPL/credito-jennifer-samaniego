@@ -10,8 +10,8 @@
   "entrada": {
     "titulo": "¡FELICITACIONES!",
     "subtitulo": "Has dejado una huella en Innova Docente UTPL 2026",
-    "texto": "Hoy formas parte de Innova Docente UTPL 2026, una iniciativa que reconoce a docentes que se atreven a transformar sus formas de enseñar, generar nuevas experiencias de aprendizaje y dejar una huella en sus estudiantes y contextos.",
-    "seccion": "Escucha el mensaje de la coordinación de Innova Docente y conoce más sobre este reconocimiento.",
+    "texto": "Ser parte de Innova Docente UTPL 2026 significa reconocer que enseñar también es atreverse a crear, experimentar y encontrar nuevas maneras de transformar el aprendizaje. Hoy celebramos tu iniciativa, creatividad y compromiso con una educación que evoluciona y genera experiencias que trascienden el aula.",
+    "seccion": "Explora la historia de esta iniciativa y su impacto a nivel local y nacional.",
     "nota": "Para ver esta experiencia en realidad aumentada, haz clic en el botón y escanea la base de la placa.",
     "privacidad": "",
     "alternativa": "Leer más información sin cámara",
@@ -29,19 +29,19 @@
       ]
     },
     {
-      "id": "docente",
-      "titulo": "Docente",
+      "id": "embajador",
+      "titulo": "Embajador",
       "tipo": "parrafos",
       "retrato": "/media/jennifer-samaniego-retrato.jpg",
       "retratoAlt": "Jennifer Betzabe Samaniego Franco",
       "nombre": "Jennifer Betzabe Samaniego Franco",
       "parrafos": [
-        "Coordinadora de Innovación Tecnopedagógica del Vicerrectorado Académico de la UTPL. Responsable del Laboratorio XR LAB y del Club Universitario de Realidad Virtual."
+        "Coordinadora de Innovación Tecnopedagógica del Vicerrectorado Académico de la UTPL."
       ],
       "enlaces": [
         {
-          "texto": "jsamaniego@utpl.edu.ec",
-          "url": "mailto:jsamaniego@utpl.edu.ec"
+          "texto": "jbsamaniego@utpl.edu.ec",
+          "url": "mailto:jbsamaniego@utpl.edu.ec"
         }
       ]
     },
