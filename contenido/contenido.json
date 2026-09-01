@@ -5,13 +5,13 @@
   },
   "docente": {
     "nombre": "Jennifer Betzabe Samaniego Franco",
-    "rol": "Docente y coordinadora de innovación tecnopedagógica"
+    "rol": "Coordinadora de innovación tecnopedagógica · UTPL"
   },
   "entrada": {
     "titulo": "¡FELICITACIONES!",
     "subtitulo": "Has dejado una huella en Innova Docente UTPL 2026",
     "texto": "Hoy formas parte de Innova Docente UTPL 2026, una iniciativa que reconoce a docentes que se atreven a transformar sus formas de enseñar, generar nuevas experiencias de aprendizaje y dejar una huella en sus estudiantes y contextos.",
-    "seccion": "Explora «Ala del Conocimiento» y conoce a la docente detrás de esta pieza.",
+    "seccion": "Escucha el mensaje de la coordinación de Innova Docente y conoce más sobre este reconocimiento.",
     "nota": "Para ver esta experiencia en realidad aumentada, haz clic en el botón y escanea la base de la placa.",
     "privacidad": "",
     "alternativa": "Leer más información sin cámara",
@@ -19,14 +19,24 @@
   },
   "pestanas": [
     {
-      "id": "artista",
-      "titulo": "Artista",
+      "id": "mensaje",
+      "titulo": "Mensaje",
+      "tipo": "parrafos",
+      "parrafos": [
+        "Como señalaba Paolo Freire, enseñar no es transferir conocimiento, sino crear las posibilidades para su propia producción o construcción. Esta convicción inspiró Innova Docente UTPL 2026, una iniciativa que reconoce y visibiliza a docentes que se atreven a transformar su práctica y generar nuevas oportunidades de aprendizaje con impacto real en sus estudiantes.",
+        "En esta primera edición reunimos experiencias de docentes de todo el Ecuador a través de la categoría Inter Universidades y de nuestra comunidad UTPL mediante Interfacultades, con los niveles Explorador y Visionario.",
+        "Innovar no solo es incorporar tecnología por sí sola: es transformar la experiencia del aprendizaje y abrir nuevas posibilidades para nuestros estudiantes. Innova Docente UTPL 2026: docentes que inspiran, innovaciones que transforman."
+      ]
+    },
+    {
+      "id": "docente",
+      "titulo": "Docente",
       "tipo": "parrafos",
       "retrato": "/media/jennifer-samaniego-retrato.jpg",
       "retratoAlt": "Jennifer Betzabe Samaniego Franco",
       "nombre": "Jennifer Betzabe Samaniego Franco",
       "parrafos": [
-        "Coordinadora de Innovación Tecnopedagógica en la UTPL. Responsable del Laboratorio XR LAB y del Club Universitario de Realidad Virtual."
+        "Coordinadora de Innovación Tecnopedagógica del Vicerrectorado Académico de la UTPL. Responsable del Laboratorio XR LAB y del Club Universitario de Realidad Virtual."
       ],
       "enlaces": [
         {
@@ -36,16 +46,13 @@
       ]
     },
     {
-      "id": "proceso",
-      "titulo": "Proceso",
+      "id": "premio",
+      "titulo": "Premio",
       "tipo": "parrafos",
-      "intro": "Ala del Conocimiento",
+      "intro": "Innova Docente UTPL 2026",
       "parrafos": [
-        "Su silueta ascendente, inspirada en un ala, una llama y una hoja, evoca el crecimiento y el vuelo hacia nuevas posibilidades. Sus líneas estriadas representan la huella del artesano, el oficio y la memoria que permanecen presentes en cada proceso de transformación.",
-        "Las perforaciones que se van integrando progresivamente representan la transición de lo manual y analógico hacia lo digital, mostrando cómo la innovación evoluciona sin perder sus raíces.",
-        "La red de nodos simboliza la conexión entre docentes, estudiantes, ideas y tecnología. En su centro, el sello dorado se convierte en un punto de encuentro y equilibrio entre todos estos elementos.",
-        "La base de madera representa la raíz y la estabilidad; la placa, el reconocimiento a quienes transforman la educación; y el código QR conecta la pieza física con una nueva experiencia digital.",
-        "«Ala del Conocimiento» nace de la tradición, se conecta con la tecnología y se proyecta hacia el futuro, como un reconocimiento a quienes hacen de la innovación una forma de transformar la educación."
+        "Los ganadores de esta convocatoria reciben «Ala del Conocimiento», una pieza que conecta arte, tecnología y educación. Quisimos que este reconocimiento también representara innovación.",
+        "La obra fue creada por el docente y artista lojano Marlon Antonio Chamba Toledo, en el marco del proyecto Innovación Arte Conectado."
       ]
     }
   ],

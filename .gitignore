@@ -20,3 +20,5 @@ vite.https.config.mjs
 video/
 public/videos marlon/
 frame-test.jpg
+
+.vercel
