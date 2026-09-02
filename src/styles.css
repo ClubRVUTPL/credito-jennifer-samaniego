@@ -1683,9 +1683,10 @@ body.sin-scroll {
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    flex: 0 0 auto;
-    min-height: 16rem;
+    flex: 1 1 0;
+    min-height: 0;
     max-height: none;
+    overflow: hidden;
     width: 100vw;
     max-width: 100vw;
     margin-left: calc(50% - 50vw);
@@ -1718,9 +1719,10 @@ body.sin-scroll {
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    flex: 0 0 auto;
-    min-height: 15rem;
+    flex: 1 1 0;
+    min-height: 0;
     max-height: none;
+    overflow: hidden;
     width: 100vw;
     max-width: 100vw;
     margin-left: calc(50% - 50vw);
@@ -1834,9 +1836,10 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-  flex: 0 0 auto;
-  min-height: 18rem;
+  flex: 1 1 0;
+  min-height: 0;
   max-height: none;
+  overflow: hidden;
   width: 100vw;
   max-width: 100vw;
   margin-left: calc(50% - 50vw);
@@ -1860,7 +1863,9 @@ body.sin-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline::after {
