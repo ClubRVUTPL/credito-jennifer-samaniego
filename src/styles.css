@@ -1675,7 +1675,7 @@ body.sin-scroll {
     --info-flex: 1;
     height: auto;
     min-height: min(48dvh, calc(100% - 3.5rem));
-    max-height: min(52dvh, calc(100% - 3.5rem));
+    max-height: min(58dvh, calc(100% - 3.5rem));
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
@@ -1684,7 +1684,7 @@ body.sin-scroll {
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
     flex: 1 1 auto;
-    min-height: 13rem;
+    min-height: 16rem;
     max-height: none;
     width: 100vw;
     max-width: 100vw;
@@ -1715,7 +1715,7 @@ body.sin-scroll {
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
     flex: 1 1 auto;
-    min-height: 12rem;
+    min-height: 15rem;
     max-height: none;
     width: 100vw;
     max-width: 100vw;
@@ -1812,7 +1812,7 @@ body.sin-scroll {
   flex: 0 0 auto;
   height: auto;
   min-height: min(50dvh, calc(100% - 3.5rem));
-  max-height: min(54dvh, calc(100% - 3.5rem));
+  max-height: min(62dvh, calc(100% - 3.5rem));
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
@@ -1831,7 +1831,7 @@ body.sin-scroll {
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
   flex: 1 1 auto;
-  min-height: 14rem;
+  min-height: 18rem;
   max-height: none;
   width: 100vw;
   max-width: 100vw;
@@ -1853,6 +1853,7 @@ body.sin-scroll {
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .paneles {
   position: relative;
+  overflow-y: visible;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline::after {
