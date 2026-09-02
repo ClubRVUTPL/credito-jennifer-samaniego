@@ -1671,18 +1671,18 @@ body.sin-scroll {
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
     --peana-encaje: clamp(12px, 3cqh, 24px);
     --peana-labio: var(--peana-encaje);
-    --zona-flex: 1.48;
-    --info-flex: 0.58;
+    max-height: min(48dvh, calc(100% - 3.5rem));
+    grid-template-rows: auto minmax(8.5rem, 1fr);
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
-    flex: 1.48 1 0;
+    flex: none;
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    flex: 0.58 1 0;
-    max-height: 40%;
-    min-height: 9rem;
+    flex: none;
+    max-height: none;
+    min-height: 0;
   }
 }
 
@@ -1700,13 +1700,13 @@ body.sin-scroll {
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .panel-retrato img {
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 3.25rem;
+    height: 3.25rem;
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    max-height: 38%;
-    min-height: 8.5rem;
+    max-height: none;
+    min-height: 0;
   }
 }
 
@@ -1774,31 +1774,37 @@ body.sin-scroll {
   transition: width 0.25s linear;
 }
 
-/* Reproducción: subir vídeo + peana; el nombre ya está en la pestaña Artista. */
+/* Reproducción: bloque anclado al pie (max 50dvh), Jennifer emerge de la peana. */
 .ar-capa[data-estado='reproduciendo'] .ar-cabecera {
   display: none;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor {
   padding-top: max(2rem, calc(env(safe-area-inset-top) + 1.5rem));
-  padding-bottom: max(0.15rem, env(safe-area-inset-bottom));
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-columna {
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
   --peana-encaje: clamp(12px, 3cqh, 24px);
   --peana-labio: var(--peana-encaje);
-  --zona-flex: 1.48;
-  --info-flex: 0.62;
-  flex: 0 1 auto;
-  max-height: min(86cqh, 100%);
+  flex: 0 0 auto;
+  max-height: min(50dvh, calc(100% - 3.5rem));
+  display: grid;
+  grid-template-rows: auto minmax(9.5rem, 1fr);
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
-  flex: 1.48 1 0;
+  flex: none;
+  min-height: 0;
+  align-items: end;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-reproductor-marco {
+  max-height: min(32dvh, 100%);
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-progreso {
@@ -1806,18 +1812,20 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-  flex: 0.62 1 0;
-  max-height: 44%;
-  min-height: 9.5rem;
+  flex: none;
+  min-height: 0;
+  max-height: none;
+  margin-top: calc(-1 * var(--peana-encaje));
+  padding: calc(0.45rem + var(--peana-encaje)) 0.75rem 0.4rem;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .panel-retrato img {
-  width: 4.25rem;
-  height: 4.25rem;
+  width: 4rem;
+  height: 4rem;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .panel p {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.3rem;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .paneles {
@@ -1830,7 +1838,7 @@ body.sin-scroll {
   bottom: 0.45rem;
   left: 0.75rem;
   right: 0.75rem;
-  height: 1.25rem;
+  height: 0.75rem;
   background: linear-gradient(to bottom, transparent, #061f3a);
   pointer-events: none;
 }
