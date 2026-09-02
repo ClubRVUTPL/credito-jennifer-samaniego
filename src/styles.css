@@ -1407,7 +1407,7 @@ body.sin-scroll {
 /* Marco 16:9 y peana de créditos comparten ancho. El ancho se deriva de la
    fracción de altura que ocupa la zona de vídeo, para no desbordar el contain. */
 .ar-reproductor-pieza {
-  --peana-solape: 10px;
+  --peana-solape: clamp(2.25rem, 18cqh, 4.75rem);
   --zona-flex: 1.7;
   --info-flex: 0.65;
   flex: 1;
@@ -1418,6 +1418,9 @@ body.sin-scroll {
   flex-direction: column;
   gap: 0;
   pointer-events: none;
+  container-type: size;
+  position: relative;
+  isolation: isolate;
 }
 
 .ar-reproductor-video-zona {
@@ -1429,7 +1432,7 @@ body.sin-scroll {
   pointer-events: none;
   container-type: size;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* El marco es la caja visible 16:9 (mitad de color del MP4 empaquetado).
@@ -1472,7 +1475,7 @@ body.sin-scroll {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center;
+  object-position: center 42%;
 }
 
 /* Con recorte, el <video> deja de verse: la imagen sale del lienzo y él solo
@@ -1597,8 +1600,8 @@ body.sin-scroll {
   pointer-events: none;
 }
 
-/* Peana: la caja de créditos es la base visual del docente. El canvas
-   transparente deja ver este fondo; los píxeles opacos quedan delante. */
+/* Peana: borde frontal opaco por encima del vídeo; el solape tapa piernas y
+   caderas para que la figura parezca salir de detrás. */
 .ar-creditos-inline {
   flex: 0.65 1 0;
   min-height: 0;
@@ -1608,23 +1611,38 @@ body.sin-scroll {
   gap: 0.45rem;
   margin-top: calc(-1 * var(--peana-solape, 10px));
   padding: calc(0.55rem + var(--peana-solape, 10px)) 0.75rem 0.45rem;
-  background: linear-gradient(
-    180deg,
-    rgba(10, 49, 87, 0.45) 0,
-    #0a3157 14px,
-    #061f3a 100%
-  );
+  background: linear-gradient(180deg, #0a3157 0, #061f3a 100%);
   border: 0;
   border-radius: 8px 8px var(--radio-lg) var(--radio-lg);
-  box-shadow: none;
+  box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.38);
   pointer-events: auto;
   overflow: hidden;
   position: relative;
+  z-index: 2;
+}
+
+.ar-creditos-inline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.55) 22%,
+    rgba(212, 175, 55, 0.78) 50%,
+    rgba(212, 175, 55, 0.55) 78%,
+    transparent 100%
+  );
+  pointer-events: none;
   z-index: 1;
 }
 
 @media (max-height: 740px) {
   .ar-reproductor-pieza {
+    --peana-solape: clamp(1.75rem, 14cqh, 3.5rem);
     --zona-flex: 2.4;
     --info-flex: 0.4;
   }
@@ -1757,6 +1775,7 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
+  --peana-solape: clamp(2rem, 16cqh, 4.25rem);
   --zona-flex: 1.45;
   --info-flex: 0.95;
   transform: translateY(-1.25rem);
