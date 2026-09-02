@@ -1671,17 +1671,18 @@ body.sin-scroll {
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
     --peana-encaje: clamp(12px, 3cqh, 24px);
     --peana-labio: var(--peana-encaje);
-    --zona-flex: 1.65;
-    --info-flex: 0.42;
+    --zona-flex: 1.48;
+    --info-flex: 0.58;
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
-    flex: 1.65 1 0;
+    flex: 1.48 1 0;
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    flex: 0.42 1 0;
-    max-height: 32%;
+    flex: 0.58 1 0;
+    max-height: 40%;
+    min-height: 9rem;
   }
 }
 
@@ -1694,8 +1695,18 @@ body.sin-scroll {
     display: none;
   }
 
+  .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .panel-retrato {
+    display: block;
+  }
+
+  .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .panel-retrato img {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    max-height: 28%;
+    max-height: 38%;
+    min-height: 8.5rem;
   }
 }
 
@@ -1769,23 +1780,25 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor {
-  padding-top: max(2.25rem, calc(env(safe-area-inset-top) + 1.75rem));
-  padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+  padding-top: max(2rem, calc(env(safe-area-inset-top) + 1.5rem));
+  padding-bottom: max(0.15rem, env(safe-area-inset-bottom));
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-columna {
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
   --peana-encaje: clamp(12px, 3cqh, 24px);
   --peana-labio: var(--peana-encaje);
-  --zona-flex: 1.72;
-  --info-flex: 0.44;
+  --zona-flex: 1.48;
+  --info-flex: 0.62;
+  flex: 0 1 auto;
+  max-height: min(86cqh, 100%);
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
-  flex: 1.72 1 0;
+  flex: 1.48 1 0;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-progreso {
@@ -1793,8 +1806,18 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-  flex: 0.44 1 0;
-  max-height: 32%;
+  flex: 0.62 1 0;
+  max-height: 44%;
+  min-height: 9.5rem;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .panel-retrato img {
+  width: 4.25rem;
+  height: 4.25rem;
+}
+
+.ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .panel p {
+  margin-bottom: 0.35rem;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .paneles {
