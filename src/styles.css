@@ -1671,18 +1671,20 @@ body.sin-scroll {
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
     --peana-encaje: clamp(12px, 3cqh, 24px);
     --peana-labio: var(--peana-encaje);
+    --zona-flex: 1.28;
+    --info-flex: 1;
     max-height: min(48dvh, calc(100% - 3.5rem));
-    grid-template-rows: auto minmax(8.5rem, 1fr);
+    height: min(48dvh, calc(100% - 3.5rem));
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
-    flex: none;
+    flex: 1.28 1 0;
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    flex: none;
+    flex: 1 1 0;
+    min-height: 9.5rem;
     max-height: none;
-    min-height: 0;
   }
 }
 
@@ -1705,8 +1707,9 @@ body.sin-scroll {
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
+    flex: 1 1 0;
+    min-height: 9rem;
     max-height: none;
-    min-height: 0;
   }
 }
 
@@ -1791,20 +1794,22 @@ body.sin-scroll {
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
   --peana-encaje: clamp(12px, 3cqh, 24px);
   --peana-labio: var(--peana-encaje);
+  --zona-flex: 1.28;
+  --info-flex: 1;
   flex: 0 0 auto;
+  height: min(50dvh, calc(100% - 3.5rem));
   max-height: min(50dvh, calc(100% - 3.5rem));
-  display: grid;
-  grid-template-rows: auto minmax(9.5rem, 1fr);
+  min-height: 0;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
-  flex: none;
+  flex: 1.28 1 0;
   min-height: 0;
   align-items: end;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-marco {
-  max-height: min(32dvh, 100%);
+  max-height: min(30dvh, 100%);
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-progreso {
@@ -1812,8 +1817,8 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-  flex: none;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 10.5rem;
   max-height: none;
   margin-top: calc(-1 * var(--peana-encaje));
   padding: calc(0.45rem + var(--peana-encaje)) 0.75rem 0.4rem;
