@@ -19,16 +19,6 @@
   },
   "pestanas": [
     {
-      "id": "mensaje",
-      "titulo": "Mensaje",
-      "tipo": "parrafos",
-      "parrafos": [
-        "Como señalaba Paolo Freire, enseñar no es transferir conocimiento, sino crear las posibilidades para su propia producción o construcción. Esta convicción inspiró Innova Docente UTPL 2026, una iniciativa que reconoce y visibiliza a docentes que se atreven a transformar su práctica y generar nuevas oportunidades de aprendizaje con impacto real en sus estudiantes.",
-        "En esta primera edición reunimos experiencias de docentes de todo el Ecuador a través de la categoría Inter Universidades y de nuestra comunidad UTPL mediante Interfacultades, con los niveles Explorador y Visionario.",
-        "Innovar no solo es incorporar tecnología por sí sola: es transformar la experiencia del aprendizaje y abrir nuevas posibilidades para nuestros estudiantes. Innova Docente UTPL 2026: docentes que inspiran, innovaciones que transforman."
-      ]
-    },
-    {
       "id": "embajador",
       "titulo": "Embajador",
       "tipo": "parrafos",
@@ -36,23 +26,14 @@
       "retratoAlt": "Jennifer Betzabe Samaniego Franco",
       "nombre": "Jennifer Betzabe Samaniego Franco",
       "parrafos": [
-        "Coordinadora de Innovación Tecnopedagógica del Vicerrectorado Académico de la UTPL."
+        "Coordinadora de Innovación Tecnopedagógica",
+        "Vicerrectorado Académico"
       ],
       "enlaces": [
         {
           "texto": "jbsamaniego@utpl.edu.ec",
           "url": "mailto:jbsamaniego@utpl.edu.ec"
         }
-      ]
-    },
-    {
-      "id": "premio",
-      "titulo": "Premio",
-      "tipo": "parrafos",
-      "intro": "Innova Docente UTPL 2026",
-      "parrafos": [
-        "Los ganadores de esta convocatoria reciben «Ala del Conocimiento», una pieza que conecta arte, tecnología y educación. Quisimos que este reconocimiento también representara innovación.",
-        "La obra fue creada por el docente y artista lojano Marlon Antonio Chamba Toledo, en el marco del proyecto Innovación Arte Conectado."
       ]
     }
   ],
