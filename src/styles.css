@@ -1674,7 +1674,7 @@ body.sin-scroll {
     --zona-flex: 1.28;
     --info-flex: 1;
     height: auto;
-    min-height: min(48dvh, calc(100% - 3.5rem));
+    min-height: calc(calc(48dvh * 1.28 / 2.28) + 16rem - var(--peana-encaje));
     max-height: min(58dvh, calc(100% - 3.5rem));
   }
 
@@ -1683,7 +1683,7 @@ body.sin-scroll {
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 16rem;
     max-height: none;
     width: 100vw;
@@ -1713,8 +1713,12 @@ body.sin-scroll {
     height: 3.25rem;
   }
 
+  .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
+    min-height: calc(calc(50dvh * 1.28 / 2.28) + 15rem - var(--peana-encaje));
+  }
+
   .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 15rem;
     max-height: none;
     width: 100vw;
@@ -1811,7 +1815,7 @@ body.sin-scroll {
   --info-flex: 1;
   flex: 0 0 auto;
   height: auto;
-  min-height: min(50dvh, calc(100% - 3.5rem));
+  min-height: calc(calc(50dvh * 1.28 / 2.28) + 18rem - var(--peana-encaje));
   max-height: min(62dvh, calc(100% - 3.5rem));
 }
 
@@ -1830,7 +1834,7 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 18rem;
   max-height: none;
   width: 100vw;
@@ -1853,7 +1857,10 @@ body.sin-scroll {
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline .paneles {
   position: relative;
-  overflow-y: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-creditos-inline::after {
