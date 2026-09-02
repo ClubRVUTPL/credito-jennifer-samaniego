@@ -1407,8 +1407,9 @@ body.sin-scroll {
 /* Marco 16:9 y peana de créditos comparten ancho. El ancho se deriva de la
    fracción de altura que ocupa la zona de vídeo, para no desbordar el contain. */
 .ar-reproductor-pieza {
-  /* Labio: franja fina que tapa solo los pies; el panel no sube sobre el torso. */
-  --peana-labio: clamp(10px, 2.2cqh, 16px);
+  /* Encaje: sube la peana hasta el borde inferior del marco; tapa solo los pies. */
+  --peana-encaje: clamp(14px, 3.5cqh, 28px);
+  --peana-labio: var(--peana-encaje);
   --zona-flex: 1.85;
   --info-flex: 0.48;
   flex: 1;
@@ -1429,7 +1430,7 @@ body.sin-scroll {
   min-height: 0;
   display: grid;
   justify-items: center;
-  align-items: center;
+  align-items: end;
   pointer-events: none;
   container-type: size;
   position: relative;
@@ -1476,7 +1477,7 @@ body.sin-scroll {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center 32%;
+  object-position: center 36%;
 }
 
 /* Con recorte, el <video> deja de verse: la imagen sale del lienzo y él solo
@@ -1601,8 +1602,7 @@ body.sin-scroll {
   pointer-events: none;
 }
 
-/* Peana: panel abajo; solo el labio (::before) se superpone al vídeo para
-   ocultar los pies sin cortar el torso. */
+/* Peana: encajada bajo el marco del vídeo; el labio tapa solo los tobillos. */
 .ar-creditos-inline {
   flex: 0.48 1 0;
   min-height: 0;
@@ -1610,8 +1610,8 @@ body.sin-scroll {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  margin-top: 0;
-  padding: 0.5rem 0.75rem 0.45rem;
+  margin-top: calc(-1 * var(--peana-encaje, 14px));
+  padding: calc(0.5rem + var(--peana-encaje, 14px)) 0.75rem 0.45rem;
   background: linear-gradient(180deg, #0a3157 0, #061f3a 100%);
   border: 0;
   border-radius: 8px 8px var(--radio-lg) var(--radio-lg);
@@ -1642,7 +1642,8 @@ body.sin-scroll {
 
 @media (max-height: 740px) {
   .ar-reproductor-pieza {
-    --peana-labio: clamp(8px, 1.8cqh, 14px);
+    --peana-encaje: clamp(10px, 2.5cqh, 22px);
+    --peana-labio: var(--peana-encaje);
     --zona-flex: 2.1;
     --info-flex: 0.38;
   }
@@ -1655,7 +1656,7 @@ body.sin-scroll {
     flex: 0.38 1 0;
     max-height: 30%;
     gap: 0.25rem;
-    padding-top: 0.4rem;
+    padding-top: calc(0.4rem + var(--peana-encaje, 14px));
   }
 
   .ar-creditos-inline .panel-retrato img {
@@ -1668,6 +1669,8 @@ body.sin-scroll {
   }
 
   .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
+    --peana-encaje: clamp(12px, 3cqh, 24px);
+    --peana-labio: var(--peana-encaje);
     --zona-flex: 1.65;
     --info-flex: 0.42;
   }
@@ -1775,10 +1778,10 @@ body.sin-scroll {
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-pieza {
-  --peana-labio: clamp(8px, 2cqh, 14px);
+  --peana-encaje: clamp(12px, 3cqh, 24px);
+  --peana-labio: var(--peana-encaje);
   --zona-flex: 1.72;
   --info-flex: 0.44;
-  transform: translateY(-0.5rem);
 }
 
 .ar-capa[data-estado='reproduciendo'] .ar-reproductor-video-zona {
