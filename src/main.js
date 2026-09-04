@@ -125,36 +125,39 @@ function esNavegadorEmbebido() {
 }
 
 /**
- * Precarga el motor de RA en tiempo muerto. Solo con ?qr=1: quien acaba de
- * escanear el código de la placa tiene la pieza en la mano y va a pulsar el
- * botón casi seguro, así que compensa adelantar los ~3 MB de A-Frame y
- * MindAR mientras lee la cabecera.
+ * Precarga el motor de RA y el marcador en cuanto la RA es viable.
  *
- * Sin ?qr=1 no se precarga nada: el visitante que llega por un enlace
- * compartido no paga esa descarga.
+ * Antes solo se hacía con ?qr=1 y con idle de hasta 3 s. Eso dejaba el primer
+ * clic esperando ~3 MB de A-Frame + MindAR en LTE: la cámara "tardaba" aunque
+ * el permiso fuera inmediato. Ahora se adelanta siempre (el botón ya implica
+ * que el visitante puede entrar) y con un idle corto.
  *
- * requestIdleCallback cede el paso a todo lo demás. Safari no lo implementó
- * hasta hace poco, así que hay un setTimeout de reserva. Los import() son los
- * mismos que hace ar.js, y el módulo queda cacheado: al pulsar el botón, la
- * importación de allí resuelve sin descargar nada.
+ * Los import() quedan en caché del módulo: al pulsar, openAR no vuelve a
+ * descargar. fetch del .mind calienta la caché HTTP del navegador.
  */
-function precargarMotor() {
+function precargarMotor(marcadorUrl) {
   const precargar = () => {
     import('./ar.js').catch(() => {});
     // El orden importa: MindAR necesita window.AFRAME ya definido.
     import('aframe')
       .then(() => import('mind-ar/dist/mindar-image-aframe.prod.js'))
-      .catch(() => {
-        // Fallo de red al precargar: no se avisa. El intento de verdad es el
-        // del clic, y ese sí tiene su camino de error-motor.
-      });
+      .catch(() => {});
+    if (marcadorUrl) {
+      // Solo calienta caché; no parseamos el binario aquí.
+      fetch(marcadorUrl, { credentials: 'same-origin' }).catch(() => {});
+    }
   };
 
   if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(precargar, { timeout: 3000 });
+    window.requestIdleCallback(precargar, { timeout: 800 });
   } else {
-    setTimeout(precargar, 1200);
+    setTimeout(precargar, 200);
   }
+}
+
+/** Arranca A-Frame + MindAR (misma secuencia que openAR). */
+function cargarMotorAR() {
+  return import('aframe').then(() => import('mind-ar/dist/mindar-image-aframe.prod.js'));
 }
 
 /**
@@ -178,11 +181,9 @@ function precargarMotor() {
  * la detección se dispara a mano. La cámara y el vídeo siguen siendo
  * imprescindibles.
  *
- * Flujo del permiso (importante): pulsar el botón NO pide la cámara. Abre
- * primero una pantalla dentro de la página que explica para qué se usa, que
- * hay que apuntar a la placa y que no se graba nada. La cámara se pide al
- * pulsar "Activar cámara" en esa pantalla — que sigue siendo un gesto del
- * usuario, así que el play() de iOS se mantiene válido.
+ * Flujo del permiso: el clic del botón pide la cámara al momento (gesto de
+ * usuario) y monta la capa de RA en paralelo con la carga del motor. Ya no
+ * hay pantalla intermedia de "Activar cámara".
  */
 function setupArButton(refs, arConfig, entrada, docenteNombre, pestanas, etiquetaCreditos) {
   const cameraAvailable = Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -201,41 +202,26 @@ function setupArButton(refs, arConfig, entrada, docenteNombre, pestanas, etiquet
 
   refs.arButton.hidden = false;
 
-  // A partir de aquí la RA es viable: si la visita viene del QR, adelantamos
-  // la descarga del motor mientras el usuario lee.
-  if (qrMode) precargarMotor();
+  // Adelantar motor + marcador mientras se lee la felicitación. Con o sin
+  // ?qr=1: el cuello de botella del primer clic era precisamente esa descarga.
+  precargarMotor(arConfig.marcador);
 
-  // Un solo gesto. Antes había una pantalla intermedia que explicaba para
-  // qué era la cámara y un segundo botón para aceptarla; esa explicación ya
-  // está en la propia pantalla de información (la nota con el icono de "i" y
-  // la línea de privacidad), así que repetirla en un modal solo añadía una
-  // interfaz de por medio y rompía la continuidad hacia la RA.
-  //
-  // ESTE clic tiene que hacer DOS cosas DENTRO del gesto del usuario, antes
-  // de cualquier descarga pesada:
-  //   1. play() del vídeo con audio (desbloqueo de iOS)
-  //   2. getUserMedia (diálogo de permiso de cámara en iPhone/Android)
-  //
-  // Si se esperase a importar A-Frame + MindAR (~3 MB) y recién ahí pedir la
-  // cámara, Safari considera el gesto consumido: no muestra el diálogo y la
-  // RA se queda en "Preparando la cámara" o salta a error-camara. Por eso el
-  // flujo pide la cámara primero, pasa el MediaStream a ar.js y MindAR lo
-  // reutiliza en vez de volver a llamar a getUserMedia tras los await.
+  // Un solo gesto. Dentro del clic, SIN esperar unos a otros:
+  //   1. play() del vídeo (desbloqueo de audio iOS)
+  //   2. getUserMedia (permiso de cámara)
+  //   3. import de ar.js + A-Frame + MindAR
+  // openAR monta el overlay al instante y espera en paralelo stream + motor.
+  // Antes era en serie (cámara → luego 3 MB de motor): latencia percibida alta.
   refs.arButton.addEventListener('click', () => {
     refs.setArStatus('');
     diag.marcarClic();
+    refs.arButton.disabled = true;
 
-    // Trampa de iOS: play() debe llamarse dentro del gesto del usuario, antes
-    // de cualquier await. Si se esperase al evento targetFound, Safari
-    // bloquearía la reproducción sin lanzar ningún error. Y como el vídeo ya
-    // no va silenciado, este play() es además lo único que desbloquea el
-    // sonido. El vídeo arranca todavía fuera del documento; ar.js lo pausa en
-    // cuanto monta la escena y lo reanuda al detectar la placa.
+    // Trampa de iOS: play() dentro del gesto, antes de cualquier await.
     const video = createArVideo(resolverVideo(arConfig.video), arConfig.poster);
     diag.setVideo(video);
-    // El gesto desbloquea la reproducción en iOS, pero NO debe oírse nada
-    // hasta que la placa dispare el vídeo. volume=0 + pausa al primer
-    // 'playing' ganan el permiso sin adelantar el audio.
+    // volume=0 + pausa al primer 'playing': desbloquea sin adelantar el audio.
+    // preload sigue en 'metadata' para no competir con la descarga del motor.
     video.volume = 0;
     const alDesbloquear = () => {
       video.pause();
@@ -246,65 +232,40 @@ function setupArButton(refs, arConfig, entrada, docenteNombre, pestanas, etiquet
       video.removeEventListener('playing', alDesbloquear);
     });
 
-    // Cámara trasera, resolución razonable para tracking. facingMode como
-    // `ideal` (no `exact`): en escritorio o si solo hay cámara frontal el
-    // navegador puede ceder sin fallar; con `exact` algunos Android/iPad
-    // rechazan el permiso entero.
-    const cameraPromise = navigator.mediaDevices.getUserMedia({
+    // Constraints mínimas: facingMode ideal. Pedir 1280×720 retrasaba el
+    // arranque en muchos móviles sin mejorar el tracking de MindAR.
+    const streamPromise = navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
+      video: { facingMode: { ideal: 'environment' } },
     });
 
-    let camStream = null;
-    cameraPromise
-      .then((stream) => {
-        camStream = stream;
-        return import('./ar.js').then((mod) =>
-          mod.openAR(
-            // pestanas viaja dentro de la configuración porque la capa de RA
-            // monta su propia hoja de créditos: consultarlos no debe obligar a
-            // salir de la experiencia.
-            { ...arConfig, docenteNombre, pestanas, etiquetaCreditos },
-            video,
-            {
-              stream,
-              // Al volver, el foco regresa al botón del que se salió: quien
-              // navega con teclado no aterriza al principio de la página.
-              // Volver NO impide reentrar — el motor queda en memoria y el
-              // permiso ya está concedido, así que la segunda vez es inmediata.
-              alVolver: () => refs.arButton.focus(),
-              // En producción esta clave se pliega a `undefined`: ni siquiera
-              // viaja el nombre de la opción de simulación.
-              ...(import.meta.env.DEV ? { simular: simulateMode } : {}),
-            }
-          )
-        );
-      })
+    // Motor en paralelo al permiso de cámara (no después).
+    const motorPromise = cargarMotorAR();
+
+    import('./ar.js')
+      .then((mod) =>
+        mod.openAR(
+          { ...arConfig, docenteNombre, pestanas, etiquetaCreditos },
+          video,
+          {
+            streamPromise,
+            motorPromise,
+            alVolver: () => {
+              refs.arButton.disabled = false;
+              refs.arButton.focus();
+            },
+            ...(import.meta.env.DEV ? { simular: simulateMode } : {}),
+          }
+        )
+      )
       .catch((error) => {
         video.pause();
-        if (camStream) {
-          camStream.getTracks().forEach((track) => track.stop());
-          camStream = null;
-        }
-        // Permiso denegado / sin cámara → mensaje de cámara. Fallo al cargar
-        // el módulo → mensaje de motor. Distinguir evita mandar a "revisa los
-        // permisos" cuando en realidad no hay red.
-        const esCamara =
-          error &&
-          (error.name === 'NotAllowedError' ||
-            error.name === 'NotFoundError' ||
-            error.name === 'NotReadableError' ||
-            error.name === 'OverconstrainedError' ||
-            error.name === 'SecurityError' ||
-            error.name === 'AbortError');
+        refs.arButton.disabled = false;
+        streamPromise
+          .then((stream) => stream.getTracks().forEach((track) => track.stop()))
+          .catch(() => {});
         if (import.meta.env.DEV) console.error('[ar] no se pudo abrir el visor:', error);
-        refs.setArStatus(
-          esCamara ? arConfig.mensajes['error-camara'] : arConfig.mensajes['error-motor']
-        );
+        refs.setArStatus(arConfig.mensajes['error-motor']);
       });
   });
 }
@@ -353,8 +314,8 @@ async function init() {
 // La portada se activa aparte de init() y antes que él, a propósito: no
 // depende de que contenido.json llegue, así que se cierra igual aunque la
 // carga del contenido falle y la página acabe mostrando el error. Los
-// segundos que está en pantalla son además tiempo libre para que, con ?qr=1,
-// el motor de RA se vaya precargando por detrás.
+// segundos que está en pantalla son además tiempo libre para que el motor
+// de RA (precargarMotor) empiece a bajarse en idle.
 initBienvenida();
 
 init();

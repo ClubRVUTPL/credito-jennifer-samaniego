@@ -1323,29 +1323,8 @@ body.sin-scroll {
 /* Entrada en foco de la cámara                                        */
 /* ------------------------------------------------------------------ */
 
-/* La imagen de la cámara aparece difuminada y se enfoca mientras arranca el
-   trackeo. Ocupa el hueco que antes era una pantalla negra esperando: en vez
-   de una carga, se ve el mundo real "revelando".
-
-   Las clases las pone y las quita ar.js (enfocarCamara) sobre el <video> que
-   crea MindAR. Se retiran al terminar para no dejar al navegador componiendo
-   un filtro sobre cada fotograma durante toda la sesión. */
-/* Estado inicial: borroso YA, sin transición. Si la transición se declarara
-   aquí, el navegador animaría también la ENTRADA en el desenfoque (de nítido
-   a borroso) y el efecto quedaría en un temblor en vez de en un enfoque. */
-.ar-camara-entrando {
-  filter: blur(24px) saturate(0.5) brightness(0.72);
-  transform: scale(1.06);
-}
-
-/* La transición vive en el estado final: al añadirse esta clase, el
-   navegador lee de aquí cómo llegar hasta ella, y solo entonces anima. */
-.ar-camara-entrando.ar-camara-enfocada {
-  filter: blur(0) saturate(1) brightness(1);
-  transform: scale(1);
-  transition: filter 1.15s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 1.15s cubic-bezier(0.22, 1, 0.36, 1);
-}
+/* El fundido CSS de enfoque de cámara se retiró (ar.js ya no aplica
+   .ar-camara-entrando): retrasaba ~1,5 s la sensación de "listo" tras arReady. */
 
 /* Mientras la cámara aún se enfoca, el escáner todavía no debe estar
    dibujado: primero se revela el mundo, luego aparece el instrumento. */

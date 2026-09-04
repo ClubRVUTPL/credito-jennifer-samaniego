@@ -44,37 +44,15 @@ import {
 } from './iconos.js';
 import { buildReproductor } from './reproductor.js';
 
-// Cuánto tarda la cámara en pasar de desenfocada a nítida al entrar, y
-// cuánto se queda borrosa antes de empezar a enfocar.
-//
-// Este fundido no es decoración: ocupa el hueco que antes era una pantalla
-// negra con "Preparando la cámara" mientras MindAR arrancaba. En vez de una
-// espera muerta, la imagen del mundo real "revela" y entra en foco delante
-// del usuario, que es el momento en que la experiencia deja de ser una
-// página y pasa a ser realidad aumentada.
-const ENFOQUE_ESPERA_MS = 380;
-const ENFOQUE_MS = 1150;
+// El fundido de enfoque se retiró: añadía ~1,5 s de cámara borrosa DESPUÉS
+// de arReady y hacía sentir que la RA "aún no arrancaba". La cámara se muestra
+// nítida en cuanto MindAR emite arReady.
 
-// A cuánto baja el volumen del vídeo mientras la hoja de créditos está
-// abierta encima. Ya no se usa: los créditos van embebidos bajo el vídeo.
-// Cuántos fotogramas consecutivos de seguimiento fallido tolera MindAR antes
-// de dar la placa por perdida (y, simétricamente, cuántos aciertos seguidos
-// exige antes de darla por encontrada). Son los parámetros nativos del motor
-// para exactamente este problema — no hace falta reinventar una histéresis
-// propia por encima: es la causa real del "titileo" al perder el enfoque un
-// instante (motion blur, autoenfoque, un dedo tapando la cámara un momento).
-//
-// WARMUP: aciertos seguidos para emitir targetFound. Antes estaba en 8
-// (más duro que el default 5 de MindAR) y retrasaba la primera detección
-// sobre metal reflectante. Con 3 la placa dorada "engancha" antes; el
-// parpadeo ya no importa porque targetLost se ignora al arrancar el vídeo.
-//
-// MISS: solo afectaría a targetLost, que no escuchamos. Se deja alto por si
-// en el futuro se vuelve a anclar contenido 3D.
-//
-// MindAR cuenta FOTOGRAMAS PROCESADOS, no milisegundos.
-const WARMUP_TOLERANCE = 3; // aciertos seguidos para darla por ENCONTRADA
-const MISS_TOLERANCE = 25; // fallos seguidos para darla por PERDIDA
+// WARMUP: aciertos seguidos para emitir targetFound. 3 = más rápido que el
+// default 5 de MindAR; el parpadeo no importa porque targetLost se ignora.
+// MISS: solo afectaría a targetLost (no escuchado).
+const WARMUP_TOLERANCE = 3;
+const MISS_TOLERANCE = 25;
 
 // NOTA: aquí vivían FILTER_MIN_CF y FILTER_BETA, que suavizaban la pose del
 // ancla para que el vídeo anclado no "respirara". Al dejar de anclar el vídeo
@@ -90,29 +68,36 @@ const MISS_TOLERANCE = 25; // fallos seguidos para darla por PERDIDA
  *   dentro del gesto del usuario. Obligatorio en iOS, y más ahora que el
  *   vídeo no va silenciado: ese play() es lo que desbloquea el sonido.
  *   Ver main.js.
- * @param {{simular?: boolean, stream?: MediaStream, alVolver?: () => void}} opciones
- *   `stream` es el MediaStream pedido en el clic (gesto de usuario). Obliga-
- *   torio en iOS: MindAR no puede llamar a getUserMedia tras los await de
- *   importación y esperar que Safari muestre el diálogo.
+ * @param {{
+ *   simular?: boolean,
+ *   stream?: MediaStream,
+ *   streamPromise?: Promise<MediaStream>,
+ *   motorPromise?: Promise<unknown>,
+ *   alVolver?: () => void,
+ * }} opciones
+ *   Preferir `streamPromise` + `motorPromise` lanzados en el clic (main.js)
+ *   para que el overlay aparezca al instante y cámara/motor carguen en paralelo.
  */
 export async function openAR(arConfig, videoEl, opciones = {}) {
-  // La comprobación se escribe SIEMPRE como `import.meta.env.DEV && …` en
-  // cada punto de uso, no a través de una variable intermedia. Vite sustituye
-  // esa constante por el literal `false` al compilar, y solo así puede Rollup
-  // plegar la condición y eliminar del bundle todo el modo simulado: la
-  // escena falsa, el botón, sus textos y el vídeo de cámara propio.
   const simulate = import.meta.env.DEV && Boolean(opciones.simular);
-  // Flujo concedido en el gesto del clic (main.js). MindAR lo reutiliza.
-  let camStream = opciones.stream || null;
 
+  // Overlay YA: feedback inmediato al clic. Antes se esperaba getUserMedia
+  // y luego se montaba la capa → segundos de pantalla estática.
   const overlay = buildOverlay(arConfig, videoEl, import.meta.env.DEV && simulate);
   document.body.appendChild(overlay.root);
   document.body.classList.add('sin-scroll');
+  overlay.setState('cargando');
+  if (videoEl) {
+    videoEl.volume = 0;
+    videoEl.pause();
+    videoEl.currentTime = 0;
+  }
 
   let closed = false;
   let sceneEl = null;
-  let simStream = null; // flujo de cámara propio del modo simulado
+  let simStream = null;
   let simCamVideo = null;
+  let camStream = null;
 
   const liberarStream = (stream) => {
     if (!stream) return;
@@ -131,31 +116,23 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
     overlay.pararRescate();
     document.removeEventListener('keydown', alPulsarEscape);
 
-    // Detener MindAR explícitamente para liberar la cámara. Si no, el
-    // indicador de grabación del sistema operativo se queda encendido y el
-    // usuario cree que le seguimos grabando.
     if (sceneEl) {
       const system = sceneEl.systems['mindar-image-system'];
       if (system) {
         try {
           system.stop();
         } catch {
-          // Si la cámara nunca llegó a arrancar (p. ej. permiso denegado),
-          // stop() puede fallar; no hay nada que liberar.
+          // permiso denegado / nunca arrancó
         }
       }
       sceneEl.remove();
     }
 
-    // En modo simulado la cámara es nuestra: se libera igual de explícitamente.
     if (simStream) {
       liberarStream(simStream);
       simStream = null;
     }
     if (simCamVideo) simCamVideo.remove();
-
-    // Si MindAR no llegó a adoptar el stream (error antes de arReady), hay
-    // que cortarlo aquí; si sí lo adoptó, system.stop() ya paró los tracks.
     if (camStream) {
       liberarStream(camStream);
       camStream = null;
@@ -163,38 +140,22 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
 
     if (videoEl) {
       videoEl.pause();
-      // Se devuelve el volumen por si se salió con los créditos abiertos:
-      // al reentrar, el vídeo no debe sonar atenuado sin motivo.
       videoEl.volume = 1;
     }
     overlay.root.remove();
     document.body.classList.remove('sin-scroll');
 
-    // Volver devuelve a la pantalla de información con todo intacto: el
-    // motor sigue en memoria y el permiso de cámara ya está concedido, así
-    // que pulsar otra vez el botón reabre la experiencia sin descargas ni
-    // una segunda pregunta del navegador.
     if (typeof opciones.alVolver === 'function') opciones.alVolver();
   };
 
   overlay.closeButton.addEventListener('click', close);
   overlay.rescateButton.addEventListener('click', close);
-  overlay.setState('cargando');
-  if (videoEl) {
-    videoEl.volume = 0;
-    videoEl.pause();
-    videoEl.currentTime = 0;
-  }
 
-  // Escape sale de la experiencia. La hoja de créditos detiene la
-  // propagación de su propio Escape (ver creditos.js), así que estando ella
-  // abierta esta tecla la cierra a ella y no la capa entera.
   const alPulsarEscape = (evento) => {
     if (evento.key === 'Escape') close();
   };
   document.addEventListener('keydown', alPulsarEscape);
 
-  // Botón de emergencia del sonido.
   if (overlay.soundButton) {
     overlay.soundButton.addEventListener('click', () => {
       videoEl.volume = 1;
@@ -203,13 +164,46 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
     });
   }
 
+  // Cámara + motor EN PARALELO (antes: cámara y luego 3 MB de motor).
+  const streamPromise =
+    opciones.streamPromise ||
+    (opciones.stream ? Promise.resolve(opciones.stream) : Promise.resolve(null));
+  const motorPromise =
+    opciones.motorPromise ||
+    import('aframe').then(() => import('mind-ar/dist/mindar-image-aframe.prod.js'));
+
+  let stream = null;
   try {
-    // Importación dinámica del motor. El orden importa: MindAR necesita
-    // encontrar window.AFRAME ya definido. (En modo simulado MindAR no se
-    // usa, pero se importa igual para que la medición de tiempos del panel
-    // de diagnóstico refleje el peso real.)
-    await import('aframe');
-    await import('mind-ar/dist/mindar-image-aframe.prod.js');
+    const resultados = await Promise.allSettled([streamPromise, motorPromise]);
+    if (closed) {
+      if (resultados[0].status === 'fulfilled' && resultados[0].value) {
+        liberarStream(resultados[0].value);
+      }
+      return;
+    }
+
+    if (resultados[1].status === 'rejected') {
+      if (resultados[0].status === 'fulfilled') liberarStream(resultados[0].value);
+      if (videoEl) videoEl.pause();
+      overlay.setState('error-motor');
+      return;
+    }
+    diag.marcarMotorCargado();
+
+    if (resultados[0].status === 'rejected') {
+      if (videoEl) videoEl.pause();
+      overlay.setState('error-camara');
+      return;
+    }
+    stream = resultados[0].value;
+    if (!stream && !(import.meta.env.DEV && simulate)) {
+      // Sin MediaStream no podemos parchear MindAR; getUserMedia tardío
+      // rompería el gesto en iOS. Fallar explícito mejor que colgarse.
+      if (videoEl) videoEl.pause();
+      overlay.setState('error-camara');
+      return;
+    }
+    camStream = stream;
   } catch {
     if (videoEl) videoEl.pause();
     liberarStream(camStream);
@@ -217,45 +211,54 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
     overlay.setState('error-motor');
     return;
   }
-  diag.marcarMotorCargado();
 
-  // El usuario pudo cerrar mientras se descargaba el motor.
   if (closed) {
     liberarStream(camStream);
     camStream = null;
     return;
   }
 
-  // Inyectar el MediaStream del gesto en MindAR ANTES de montar la escena.
-  // Sin esto, MindAR llama a getUserMedia tras los await y en iOS Safari el
-  // diálogo de permiso no aparece (gesto ya consumido).
   if (camStream && !(import.meta.env.DEV && simulate)) {
     inyectarStreamEnMindAR(camStream);
-    // MindAR (system.stop) corta los tracks al cerrar; no liberar dos veces.
-    camStream = null;
+    // NO hacer camStream = null aquí. Si el usuario pulsa Volver antes de
+    // arReady, MindAR puede no tener aún this.video y system.stop() falla
+    // sin liberar tracks → indicador verde de cámara colgado. close() siempre
+    // llama liberarStream(camStream) como red de seguridad (stop idempotente).
   }
 
-  // Una sola vez, y para siempre. La primera detección confirmada arranca el
-  // vídeo; a partir de ahí perder la placa no significa nada (ver la nota de
-  // cabecera: en cuanto empieza, la mano baja). Por eso no hay onLost.
   let yaArrancado = false;
 
   const onFound = () => {
     if (closed || yaArrancado) return;
     yaArrancado = true;
 
-    // El escáner deja de tener sentido y la cámara pasa al fondo: el estado
-    // lo escribe setState y todo lo visual cuelga de él en CSS.
     overlay.setState('reproduciendo');
     overlay.pararRescate();
     overlay.reproductor.mostrar();
 
+    // El vídeo ya no depende del seguimiento: parar el CV libera CPU/GPU en
+    // móvil. keepVideo=true deja el preview de cámara vivo detrás.
+    if (sceneEl) {
+      const system = sceneEl.systems['mindar-image-system'];
+      if (system && typeof system.pause === 'function') {
+        try {
+          system.pause(true);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     if (videoEl) {
-      // Audio y vídeo arrancan juntos, aquí: el play() silencioso de
-      // main.js solo desbloqueó iOS. Hasta este instante el volumen es 0.
       videoEl.volume = 1;
       videoEl.muted = false;
       videoEl.currentTime = 0;
+      // Empujar buffer: hasta ahora solo metadata.
+      try {
+        videoEl.preload = 'auto';
+      } catch {
+        // ignore
+      }
       videoEl
         .play()
         .then(() => overlay.setSoundBlocked(false))
@@ -272,11 +275,7 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
     camStream = null;
     try {
       simStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+        video: { facingMode: { ideal: 'environment' } },
       });
     } catch {
       overlay.setState('error-camara');
@@ -304,7 +303,6 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
     sceneEl.addEventListener('loaded', () => {
       if (closed) return;
       diag.marcarCamaraLista();
-      enfocarCamara(simCamVideo, () => closed);
       if (videoEl) videoEl.pause();
       overlay.setState('buscando');
     });
@@ -329,11 +327,7 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
     const system = sceneEl.systems['mindar-image-system'];
     if (system && system.video) {
       diag.setCamara(system.video);
-      enfocarCamara(system.video, () => closed);
     }
-    // La cámara ya está en marcha. El vídeo espera pausado: el play() que
-    // lanzó main.js dentro del gesto del usuario servía para desbloquear el
-    // audio en iOS, no para reproducir todavía.
     if (videoEl) videoEl.pause();
     overlay.setState('buscando');
   });
@@ -354,45 +348,8 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Entrada en foco de la cámara                                        */
+/* Entrada en foco de la cámara (retirada: retrasaba la sensación de listo) */
 /* ------------------------------------------------------------------ */
-
-/**
- * Hace que la imagen de la cámara aparezca difuminada y se vaya enfocando.
- *
- * Se aplica sobre el <video> que crea MindAR, no sobre uno propio: MindAR
- * gestiona ese elemento (posición, tamaño, flujo) y aquí solo se le añade un
- * filtro CSS, que no altera su geometría. El lienzo 3D es un hermano suyo,
- * no un hijo, así que el desenfoque no toca al vídeo del docente.
- *
- * La espera inicial existe para que el fotograma borroso llegue a verse: sin
- * ella, en un teléfono rápido el enfoque termina antes de que el ojo lo
- * registre y el efecto se pierde.
- *
- * @param {HTMLVideoElement} video  El vídeo de cámara de MindAR.
- * @param {() => boolean} seCerro  Consulta si la capa ya se cerró.
- */
-function enfocarCamara(video, seCerro) {
-  const sinMovimiento =
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Con "reducir movimiento" no hay transición de enfoque: entrar en una
-  // experiencia de cámara ya es bastante estímulo.
-  if (sinMovimiento) return;
-
-  video.classList.add('ar-camara-entrando');
-  setTimeout(() => {
-    if (seCerro()) return;
-    video.classList.add('ar-camara-enfocada');
-    // La clase que instala el filtro se retira al terminar para no dejar al
-    // navegador componiendo una capa de filtro sobre cada fotograma de vídeo
-    // durante el resto de la sesión.
-    setTimeout(() => {
-      video.classList.remove('ar-camara-entrando', 'ar-camara-enfocada');
-    }, ENFOQUE_MS + 60);
-  }, ENFOQUE_ESPERA_MS);
-}
 
 /* ------------------------------------------------------------------ */
 /* Interfaz de la capa: mensaje, escáner y botones                     */
