@@ -12,8 +12,8 @@
     "subtitulo": "Has dejado una huella en Innova Docente UTPL 2026",
     "texto": "Ser parte de Innova Docente UTPL 2026 significa reconocer que enseñar también es atreverse a crear, experimentar y encontrar nuevas maneras de transformar el aprendizaje. Hoy celebramos tu iniciativa, creatividad y compromiso con una educación que evoluciona y genera experiencias que trascienden el aula.",
     "seccion": "Explora la historia de esta iniciativa y su impacto a nivel local y nacional.",
-    "nota": "Para ver esta experiencia en realidad aumentada, haz clic en el botón y escanea la base de la placa.",
-    "privacidad": "",
+    "nota": "Para ver esta experiencia en realidad aumentada, haz clic en el botón y apunta a la placa dorada (evita reflejos fuertes).",
+    "privacidad": "Al continuar, el navegador pedirá permiso para usar la cámara. No se graba ni se envía ninguna imagen.",
     "alternativa": "Leer más información sin cámara",
     "navegadorEmbebido": "Estás viendo esta página dentro de otra aplicación, y ahí la cámara no está disponible. Ábrela en tu navegador (Safari o Chrome) para ver la experiencia en realidad aumentada."
   },
@@ -44,7 +44,7 @@
       "480": "/media/jennifer-samaniego-480.mp4"
     },
     "poster": "/media/jennifer-samaniego-cartel.jpg",
-    "boton": "Clic aquí",
+    "boton": "Activar cámara",
     "cerrar": "Volver",
     "creditos": "Más información",
     "activarSonido": "Activar sonido",
@@ -54,7 +54,7 @@
     },
     "mensajes": {
       "cargando": "Preparando la cámara",
-      "buscando": "Apunta a la placa dorada del trofeo",
+      "buscando": "Apunta a la placa dorada de frente, sin reflejos",
       "error-camara": "No se pudo acceder a la cámara. Revisa los permisos del navegador para este sitio e inténtalo de nuevo.",
       "error-motor": "No se pudo cargar el visor de realidad aumentada. Comprueba la conexión, cierra y vuelve a intentarlo.",
       "reproduciendo": ""

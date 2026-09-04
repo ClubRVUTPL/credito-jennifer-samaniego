@@ -64,17 +64,16 @@ const ENFOQUE_MS = 1150;
 // propia por encima: es la causa real del "titileo" al perder el enfoque un
 // instante (motion blur, autoenfoque, un dedo tapando la cámara un momento).
 //
-// Con los valores por defecto de MindAR (5 fotogramas cada uno) basta una
-// fracción de segundo de mala lectura para que la placa se dé por perdida:
-// el vídeo se oculta y reaparece todo el rato. MISS_TOLERANCE más alto pide
-// una pérdida sostenida —de verdad, la placa fuera de cuadro— antes de
-// ocultar nada.
+// WARMUP: aciertos seguidos para emitir targetFound. Antes estaba en 8
+// (más duro que el default 5 de MindAR) y retrasaba la primera detección
+// sobre metal reflectante. Con 3 la placa dorada "engancha" antes; el
+// parpadeo ya no importa porque targetLost se ignora al arrancar el vídeo.
 //
-// Ajustar aquí si hace falta más tras probar en el teléfono real: MindAR
-// cuenta FOTOGRAMAS PROCESADOS, no milisegundos, y esa tasa varía según la
-// potencia del equipo. Si en un móvil concreto la placa tarda demasiado en
-// darse por perdida, baja MISS_TOLERANCE; si sigue parpadeando, súbelo.
-const WARMUP_TOLERANCE = 8; // aciertos seguidos para darla por ENCONTRADA
+// MISS: solo afectaría a targetLost, que no escuchamos. Se deja alto por si
+// en el futuro se vuelve a anclar contenido 3D.
+//
+// MindAR cuenta FOTOGRAMAS PROCESADOS, no milisegundos.
+const WARMUP_TOLERANCE = 3; // aciertos seguidos para darla por ENCONTRADA
 const MISS_TOLERANCE = 25; // fallos seguidos para darla por PERDIDA
 
 // NOTA: aquí vivían FILTER_MIN_CF y FILTER_BETA, que suavizaban la pose del
@@ -91,7 +90,10 @@ const MISS_TOLERANCE = 25; // fallos seguidos para darla por PERDIDA
  *   dentro del gesto del usuario. Obligatorio en iOS, y más ahora que el
  *   vídeo no va silenciado: ese play() es lo que desbloquea el sonido.
  *   Ver main.js.
- * @param {{simular?: boolean}} opciones
+ * @param {{simular?: boolean, stream?: MediaStream, alVolver?: () => void}} opciones
+ *   `stream` es el MediaStream pedido en el clic (gesto de usuario). Obliga-
+ *   torio en iOS: MindAR no puede llamar a getUserMedia tras los await de
+ *   importación y esperar que Safari muestre el diálogo.
  */
 export async function openAR(arConfig, videoEl, opciones = {}) {
   // La comprobación se escribe SIEMPRE como `import.meta.env.DEV && …` en
@@ -100,6 +102,8 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
   // plegar la condición y eliminar del bundle todo el modo simulado: la
   // escena falsa, el botón, sus textos y el vídeo de cámara propio.
   const simulate = import.meta.env.DEV && Boolean(opciones.simular);
+  // Flujo concedido en el gesto del clic (main.js). MindAR lo reutiliza.
+  let camStream = opciones.stream || null;
 
   const overlay = buildOverlay(arConfig, videoEl, import.meta.env.DEV && simulate);
   document.body.appendChild(overlay.root);
@@ -109,6 +113,17 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
   let sceneEl = null;
   let simStream = null; // flujo de cámara propio del modo simulado
   let simCamVideo = null;
+
+  const liberarStream = (stream) => {
+    if (!stream) return;
+    stream.getTracks().forEach((track) => {
+      try {
+        track.stop();
+      } catch {
+        // track ya parado
+      }
+    });
+  };
 
   const close = () => {
     if (closed) return;
@@ -134,9 +149,17 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
 
     // En modo simulado la cámara es nuestra: se libera igual de explícitamente.
     if (simStream) {
-      simStream.getTracks().forEach((track) => track.stop());
+      liberarStream(simStream);
+      simStream = null;
     }
     if (simCamVideo) simCamVideo.remove();
+
+    // Si MindAR no llegó a adoptar el stream (error antes de arReady), hay
+    // que cortarlo aquí; si sí lo adoptó, system.stop() ya paró los tracks.
+    if (camStream) {
+      liberarStream(camStream);
+      camStream = null;
+    }
 
     if (videoEl) {
       videoEl.pause();
@@ -189,13 +212,28 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
     await import('mind-ar/dist/mindar-image-aframe.prod.js');
   } catch {
     if (videoEl) videoEl.pause();
+    liberarStream(camStream);
+    camStream = null;
     overlay.setState('error-motor');
     return;
   }
   diag.marcarMotorCargado();
 
   // El usuario pudo cerrar mientras se descargaba el motor.
-  if (closed) return;
+  if (closed) {
+    liberarStream(camStream);
+    camStream = null;
+    return;
+  }
+
+  // Inyectar el MediaStream del gesto en MindAR ANTES de montar la escena.
+  // Sin esto, MindAR llama a getUserMedia tras los await y en iOS Safari el
+  // diálogo de permiso no aparece (gesto ya consumido).
+  if (camStream && !(import.meta.env.DEV && simulate)) {
+    inyectarStreamEnMindAR(camStream);
+    // MindAR (system.stop) corta los tracks al cerrar; no liberar dos veces.
+    camStream = null;
+  }
 
   // Una sola vez, y para siempre. La primera detección confirmada arranca el
   // vídeo; a partir de ahí perder la placa no significa nada (ver la nota de
@@ -229,9 +267,16 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
 
   if (import.meta.env.DEV && simulate) {
     /* ── Modo simulado: cámara propia, sin MindAR ─────────────────────── */
+    // Si venía un stream del clic, lo liberamos: el modo simulado abre el suyo.
+    liberarStream(camStream);
+    camStream = null;
     try {
       simStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
       });
     } catch {
       overlay.setState('error-camara');
@@ -545,6 +590,63 @@ function buildOverlay(arConfig, videoEl, simulate) {
     soundButton,
     setSoundBlocked,
     setState,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Cámara: reutilizar el MediaStream del gesto del usuario             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * MindAR (A-Frame) siempre crea su propio <video> y llama a getUserMedia
+ * dentro de `_startVideo`. Eso rompe en iOS cuando `_startVideo` corre
+ * después de `await import(...)`: el gesto ya no está activo y Safari no
+ * muestra el diálogo.
+ *
+ * Esta función sustituye `_startVideo` del sistema por una versión que
+ * monta el <video> igual que MindAR pero con el stream ya concedido en el
+ * clic. Solo se llama una vez por sesión de RA, antes de crear la escena.
+ *
+ * @param {MediaStream} stream
+ */
+function inyectarStreamEnMindAR(stream) {
+  const systems = window.AFRAME && window.AFRAME.systems;
+  const MindARSystem = systems && systems['mindar-image-system'];
+  if (!MindARSystem || !MindARSystem.prototype) return;
+
+  // Conservar el original la primera vez por si hace falta restaurar.
+  if (!MindARSystem.prototype._startVideoOriginal) {
+    MindARSystem.prototype._startVideoOriginal = MindARSystem.prototype._startVideo;
+  }
+
+  MindARSystem.prototype._startVideo = function _startVideoConStream() {
+    this.video = document.createElement('video');
+    this.video.setAttribute('autoplay', '');
+    this.video.setAttribute('muted', '');
+    this.video.setAttribute('playsinline', '');
+    this.video.setAttribute('webkit-playsinline', '');
+    this.video.muted = true;
+    this.video.playsInline = true;
+    this.video.style.position = 'absolute';
+    this.video.style.top = '0px';
+    this.video.style.left = '0px';
+    this.video.style.zIndex = '-2';
+    this.container.appendChild(this.video);
+
+    let arrancado = false;
+    const arrancar = () => {
+      if (arrancado) return;
+      arrancado = true;
+      this.video.setAttribute('width', this.video.videoWidth);
+      this.video.setAttribute('height', this.video.videoHeight);
+      this._startAR();
+    };
+
+    this.video.addEventListener('loadedmetadata', arrancar, { once: true });
+    this.video.srcObject = stream;
+    // En algunos WebKit el metadata ya está listo al asignar un stream vivo.
+    if (this.video.readyState >= 1) arrancar();
+    this.video.play().catch(() => {});
   };
 }
 

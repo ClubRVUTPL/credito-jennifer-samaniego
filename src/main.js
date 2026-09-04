@@ -211,8 +211,16 @@ function setupArButton(refs, arConfig, entrada, docenteNombre, pestanas, etiquet
   // la línea de privacidad), así que repetirla en un modal solo añadía una
   // interfaz de por medio y rompía la continuidad hacia la RA.
   //
-  // ESTE clic es el gesto que desbloquea el vídeo —que lleva el audio
-  // dentro— y el que dispara el diálogo de permiso del navegador.
+  // ESTE clic tiene que hacer DOS cosas DENTRO del gesto del usuario, antes
+  // de cualquier descarga pesada:
+  //   1. play() del vídeo con audio (desbloqueo de iOS)
+  //   2. getUserMedia (diálogo de permiso de cámara en iPhone/Android)
+  //
+  // Si se esperase a importar A-Frame + MindAR (~3 MB) y recién ahí pedir la
+  // cámara, Safari considera el gesto consumido: no muestra el diálogo y la
+  // RA se queda en "Preparando la cámara" o salta a error-camara. Por eso el
+  // flujo pide la cámara primero, pasa el MediaStream a ar.js y MindAR lo
+  // reutiliza en vez de volver a llamar a getUserMedia tras los await.
   refs.arButton.addEventListener('click', () => {
     refs.setArStatus('');
     diag.marcarClic();
@@ -238,36 +246,65 @@ function setupArButton(refs, arConfig, entrada, docenteNombre, pestanas, etiquet
       video.removeEventListener('playing', alDesbloquear);
     });
 
-    import('./ar.js')
-      .then((mod) =>
-        mod.openAR(
-          // pestanas viaja dentro de la configuración porque la capa de RA
-          // monta su propia hoja de créditos: consultarlos no debe obligar a
-          // salir de la experiencia.
-          { ...arConfig, docenteNombre, pestanas, etiquetaCreditos },
-          video,
-          {
-            // Al volver, el foco regresa al botón del que se salió: quien
-            // navega con teclado no aterriza al principio de la página.
-            // Volver NO impide reentrar — el motor queda en memoria y el
-            // permiso ya está concedido, así que la segunda vez es inmediata.
-            alVolver: () => refs.arButton.focus(),
-            // En producción esta clave se pliega a `undefined`: ni siquiera
-            // viaja el nombre de la opción de simulación.
-            ...(import.meta.env.DEV ? { simular: simulateMode } : {}),
-          }
-        )
-      )
+    // Cámara trasera, resolución razonable para tracking. facingMode como
+    // `ideal` (no `exact`): en escritorio o si solo hay cámara frontal el
+    // navegador puede ceder sin fallar; con `exact` algunos Android/iPad
+    // rechazan el permiso entero.
+    const cameraPromise = navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    });
+
+    let camStream = null;
+    cameraPromise
+      .then((stream) => {
+        camStream = stream;
+        return import('./ar.js').then((mod) =>
+          mod.openAR(
+            // pestanas viaja dentro de la configuración porque la capa de RA
+            // monta su propia hoja de créditos: consultarlos no debe obligar a
+            // salir de la experiencia.
+            { ...arConfig, docenteNombre, pestanas, etiquetaCreditos },
+            video,
+            {
+              stream,
+              // Al volver, el foco regresa al botón del que se salió: quien
+              // navega con teclado no aterriza al principio de la página.
+              // Volver NO impide reentrar — el motor queda en memoria y el
+              // permiso ya está concedido, así que la segunda vez es inmediata.
+              alVolver: () => refs.arButton.focus(),
+              // En producción esta clave se pliega a `undefined`: ni siquiera
+              // viaja el nombre de la opción de simulación.
+              ...(import.meta.env.DEV ? { simular: simulateMode } : {}),
+            }
+          )
+        );
+      })
       .catch((error) => {
-        // De cara al usuario, cualquier fallo aquí es lo mismo: el visor no
-        // se pudo abrir. Pero este catch cubre DOS cosas muy distintas —que
-        // falle la descarga del módulo, y que openAR reviente por dentro— y
-        // en desarrollo confundirlas cuesta horas: un error de programación
-        // se leía como "no hay conexión". En producción la línea desaparece
-        // del bundle; el mensaje al usuario es el mismo en ambos casos.
-        if (import.meta.env.DEV) console.error('[ar] no se pudo abrir el visor:', error);
         video.pause();
-        refs.setArStatus(arConfig.mensajes['error-motor']);
+        if (camStream) {
+          camStream.getTracks().forEach((track) => track.stop());
+          camStream = null;
+        }
+        // Permiso denegado / sin cámara → mensaje de cámara. Fallo al cargar
+        // el módulo → mensaje de motor. Distinguir evita mandar a "revisa los
+        // permisos" cuando en realidad no hay red.
+        const esCamara =
+          error &&
+          (error.name === 'NotAllowedError' ||
+            error.name === 'NotFoundError' ||
+            error.name === 'NotReadableError' ||
+            error.name === 'OverconstrainedError' ||
+            error.name === 'SecurityError' ||
+            error.name === 'AbortError');
+        if (import.meta.env.DEV) console.error('[ar] no se pudo abrir el visor:', error);
+        refs.setArStatus(
+          esCamara ? arConfig.mensajes['error-camara'] : arConfig.mensajes['error-motor']
+        );
       });
   });
 }

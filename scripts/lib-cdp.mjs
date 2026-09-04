@@ -70,9 +70,15 @@ export async function lanzarNavegador(extraArgs = []) {
   if (!browser) throw new Error('No se encontró Edge ni Chrome (defina NAVEGADOR=ruta.exe)');
 
   const userDataDir = mkdtempSync(join(tmpdir(), 'cdp-'));
+  const needsWebGL = extraArgs.some((a) =>
+    /swiftshader|webgl|angle|gpu-blocklist/i.test(a)
+  );
   const proc = spawn(browser, [
     '--headless=new',
-    '--disable-gpu',
+    // --disable-gpu rompe WebGL/SwiftShader en headless; solo usarlo si no hace falta GL.
+    ...(needsWebGL
+      ? ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+      : ['--disable-gpu']),
     '--remote-debugging-port=0',
     `--user-data-dir=${userDataDir}`,
     '--no-first-run',
