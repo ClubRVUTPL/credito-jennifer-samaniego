@@ -1,5 +1,5 @@
-// compilar-marcador-headless.mjs — Compila public/ar/placa.jpg a
-// public/ar/targets.mind sin abrir el navegador a mano.
+// compilar-marcador-headless.mjs — Compila placa-cara-qr.jpg + placa-cara-texto.jpg
+// a public/ar/targets.mind sin abrir el navegador a mano.
 //
 // Reutiliza compilador-marcador.html (la misma herramienta manual) en un
 // navegador headless vía CDP, espera el resultado y escribe el fichero.
@@ -33,25 +33,29 @@ try {
 
   // SwiftShader: WebGL por software. Sin esto, el TensorFlow del compilador
   // no encuentra WebGL en headless y la compilación se queda colgada.
-  navegador = await lanzarNavegador(['--use-angle=swiftshader']);
+  navegador = await lanzarNavegador(['--use-angle=swiftshader', '--enable-webgl', '--enable-webgl2']);
   const { cdp } = navegador;
 
   await navegar(cdp, `${baseUrl}/compilador-marcador.html`);
-  console.log('Compilando el marcador (30-90 s según la máquina)…');
+  console.log('Compilando el marcador (2 caras; 30-120 s según la máquina)…');
 
-  // La compilación es un proceso pesado (detección de puntos multi-escala).
   await esperar(cdp, 'Boolean(window.__resultadoCompilacion || window.__errorCompilacion)', {
-    timeoutMs: 180000,
+    timeoutMs: 240000,
     intervalMs: 1000,
   });
 
   const error = await evaluate(cdp, 'window.__errorCompilacion || null');
   if (error) throw new Error(error);
 
-  const { matching, tracking } = JSON.parse(
+  const resumen = JSON.parse(
     await evaluate(
       cdp,
-      'JSON.stringify({ matching: window.__resultadoCompilacion.matching, tracking: window.__resultadoCompilacion.tracking })'
+      `JSON.stringify({
+        matching: window.__resultadoCompilacion.matching,
+        tracking: window.__resultadoCompilacion.tracking,
+        targets: window.__resultadoCompilacion.targets,
+        porTarget: window.__resultadoCompilacion.porTarget || null
+      })`
     )
   );
   const base64 = await evaluate(cdp, 'window.__resultadoCompilacion.base64');
@@ -59,11 +63,18 @@ try {
 
   const kb = (statSync(salida).size / 1024).toFixed(1);
   console.log(`\ntargets.mind generado (${kb} kB)`);
-  console.log(`  Puntos de detección (matching):   ${matching}`);
-  console.log(`  Puntos de seguimiento (tracking): ${tracking}`);
-  if (matching < 100) {
+  console.log(`  Targets: ${resumen.targets}`);
+  if (Array.isArray(resumen.porTarget)) {
+    for (const t of resumen.porTarget) {
+      const label = t.index === 0 ? 'QR' : t.index === 1 ? 'texto' : `t${t.index}`;
+      console.log(`  Target ${t.index} (${label}): matching=${t.matching}, tracking=${t.tracking}`);
+    }
+  }
+  console.log(`  Total matching:   ${resumen.matching}`);
+  console.log(`  Total tracking:   ${resumen.tracking}`);
+  if (resumen.matching < 100) {
     console.log(
-      '\nAVISO: menos de ~100 puntos de detección; el marcador puede ser poco\n' +
+      '\nAVISO: menos de ~100 puntos de detección en total; el marcador puede ser poco\n' +
         'fiable. Añade más texto/detalle a la placa y vuelve a generarla.'
     );
     process.exitCode = 1;

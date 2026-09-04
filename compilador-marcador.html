@@ -6,8 +6,8 @@
     <title>Compilador del marcador</title>
     <!--
       Herramienta SOLO de desarrollo (no forma parte del build de producción).
-      Compila public/ar/placa.jpg a targets.mind usando el compilador que trae
-      el propio paquete mind-ar, e informa de los puntos característicos.
+      Compila public/ar/placa-cara-qr.jpg + placa-cara-texto.jpg a targets.mind
+      (dos caras del mismo marcador físico) usando el compilador de mind-ar.
       Instrucciones completas: scripts/compilar-marcador.md
     -->
     <style>
@@ -21,6 +21,18 @@
       img {
         max-width: 100%;
         border: 1px solid #ccc;
+        margin: 0.5rem 0;
+      }
+      .caras {
+        display: grid;
+        gap: 1rem;
+      }
+      .caras figure {
+        margin: 0;
+      }
+      .caras figcaption {
+        font-size: 0.9rem;
+        color: #444;
       }
       #salida {
         white-space: pre-wrap;
@@ -40,17 +52,18 @@
     </style>
   </head>
   <body>
-    <h1>Compilador del marcador</h1>
+    <h1>Compilador del marcador (2 caras)</h1>
     <p>
-      Lee <code>public/ar/placa.jpg</code>, lo compila con el compilador del
-      paquete <code>mind-ar</code> y descarga <code>targets.mind</code>.
+      Lee <code>public/ar/placa-cara-qr.jpg</code> y
+      <code>public/ar/placa-cara-texto.jpg</code>, los compila con el
+      compilador del paquete <code>mind-ar</code> y descarga
+      <code>targets.mind</code> (un solo fichero con ambos targets).
     </p>
-    <div id="imagen"></div>
-    <p id="salida">Cargando la imagen…</p>
+    <div id="imagen" class="caras"></div>
+    <p id="salida">Cargando las imágenes…</p>
     <div id="descarga"></div>
 
     <script type="module">
-      // Importa el compilador desde el paquete instalado (nada de CDN).
       import 'mind-ar/dist/mindar-image.prod.js';
 
       const salida = document.querySelector('#salida');
@@ -64,12 +77,10 @@
       async function cargarImagen(url) {
         const img = new Image();
         img.src = url;
-        await img.decode(); // lanza si la imagen no existe o no es válida
+        await img.decode();
         return img;
       }
 
-      // Cuenta los puntos característicos de forma defensiva: la estructura
-      // interna de mind-ar puede variar entre versiones menores.
       function contarPuntos(data) {
         let matching = 0;
         let tracking = 0;
@@ -83,47 +94,88 @@
         return { matching, tracking };
       }
 
+      function mostrarCara(img, etiqueta) {
+        const fig = document.createElement('figure');
+        const cap = document.createElement('figcaption');
+        cap.textContent = etiqueta;
+        fig.appendChild(cap);
+        fig.appendChild(img);
+        zonaImagen.appendChild(fig);
+      }
+
       async function main() {
-        let img;
+        let imgQr;
+        let imgTexto;
         try {
-          img = await cargarImagen('/ar/placa.jpg');
+          imgQr = await cargarImagen('/ar/placa-cara-qr.jpg');
         } catch {
           log(
-            'No existe public/ar/placa.jpg (o no es una imagen válida).\n' +
-              'Coloca ahí la foto/diseño de la placa y recarga esta página.'
+            'No existe public/ar/placa-cara-qr.jpg (o no es una imagen válida).\n' +
+              'Coloca ahí la cara QR de la placa y recarga esta página.'
           );
-          window.__errorCompilacion = 'falta public/ar/placa.jpg';
+          window.__errorCompilacion = 'falta public/ar/placa-cara-qr.jpg';
           return;
         }
-        zonaImagen.appendChild(img);
+        try {
+          imgTexto = await cargarImagen('/ar/placa-cara-texto.jpg');
+        } catch {
+          log(
+            'No existe public/ar/placa-cara-texto.jpg (o no es una imagen válida).\n' +
+              'Coloca ahí la cara de texto de la placa y recarga esta página.'
+          );
+          window.__errorCompilacion = 'falta public/ar/placa-cara-texto.jpg';
+          return;
+        }
+
+        mostrarCara(imgQr, 'Cara QR — /ar/placa-cara-qr.jpg');
+        mostrarCara(imgTexto, 'Cara texto — /ar/placa-cara-texto.jpg');
 
         const compiler = new window.MINDAR.IMAGE.Compiler();
         log('Compilando… 0 %');
-        const dataList = await compiler.compileImageTargets([img], (progreso) => {
-          log(`Compilando… ${progreso.toFixed(0)} %`);
-        });
+        const dataList = await compiler.compileImageTargets(
+          [imgQr, imgTexto],
+          (progreso) => {
+            log(`Compilando… ${progreso.toFixed(0)} %`);
+          }
+        );
 
-        const { matching, tracking } = contarPuntos(dataList[0]);
+        const porTarget = dataList.map((data, i) => {
+          const pts = contarPuntos(data);
+          return { index: i, ...pts };
+        });
+        const matching = porTarget.reduce((s, t) => s + t.matching, 0);
+        const tracking = porTarget.reduce((s, t) => s + t.tracking, 0);
+
+        const detalle = porTarget
+          .map(
+            (t) =>
+              `  Target ${t.index} (${t.index === 0 ? 'QR' : 'texto'}): matching=${t.matching}, tracking=${t.tracking}`
+          )
+          .join('\n');
+
         log(
-          `Compilación terminada.\n` +
-            `Puntos de detección (matching): ${matching}\n` +
-            `Puntos de seguimiento (tracking): ${tracking}\n\n` +
-            `Orientación: por debajo de ~100 puntos de detección el marcador será poco fiable;\n` +
+          `Compilación terminada (${dataList.length} targets).\n` +
+            `${detalle}\n` +
+            `Total matching: ${matching}\n` +
+            `Total tracking: ${tracking}\n\n` +
+            `Orientación: por debajo de ~100 puntos de detección por cara el marcador será poco fiable;\n` +
             `busca una imagen con más contraste, texto y detalle no repetitivo.`
         );
 
         const buffer = await compiler.exportData();
 
-        // Para el modo headless (scripts/compilar-marcador-headless.mjs):
-        // expone el resultado en una global. No afecta al uso manual.
-        // La conversión a base64 va por trozos: el buffer puede medir varios
-        // MB y el spread en String.fromCharCode desbordaría la pila.
         const bytes = new Uint8Array(buffer);
         let binario = '';
         for (let i = 0; i < bytes.length; i += 32768) {
           binario += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
         }
-        window.__resultadoCompilacion = { matching, tracking, base64: btoa(binario) };
+        window.__resultadoCompilacion = {
+          matching,
+          tracking,
+          targets: dataList.length,
+          porTarget,
+          base64: btoa(binario),
+        };
 
         const blob = new Blob([buffer], { type: 'application/octet-stream' });
         const enlace = document.createElement('a');

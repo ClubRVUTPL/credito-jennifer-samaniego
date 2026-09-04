@@ -346,8 +346,11 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
 
   // Solo targetFound. targetLost no se escucha a propósito: ver la nota de
   // cabecera sobre por qué el seguimiento deja de importar al arrancar.
-  const target = sceneEl.querySelector('[mindar-image-target]');
-  target.addEventListener('targetFound', onFound);
+  // Hay DOS anclas (cara QR + cara texto de la base): cualquiera dispara
+  // la misma experiencia. onFound ya es idempotente (yaArrancado).
+  sceneEl.querySelectorAll('[mindar-image-target]').forEach((target) => {
+    target.addEventListener('targetFound', onFound);
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -674,11 +677,9 @@ function buildScene(arConfig) {
   scene.setAttribute(
     'mindar-image',
     // Interfaz propia de MindAR desactivada: los estados los pinta esta capa.
-    // warmupTolerance/missTolerance: ver la constante al principio del
-    // fichero. Aquí ya solo gobiernan CUÁNDO se da la placa por encontrada
-    // (missTolerance queda sin efecto práctico, porque targetLost no se
-    // escucha, pero se deja para no dejar el motor en un ajuste raro).
-    `imageTargetSrc: ${arConfig.marcador}; uiScanning: no; uiLoading: no; uiError: no; ` +
+    // maxTrack: 2 → la base tiene DOS caras (QR cuadrado + placa con texto);
+    // cualquiera debe abrir la misma RA. warmup/miss: ver constantes arriba.
+    `imageTargetSrc: ${arConfig.marcador}; maxTrack: 2; uiScanning: no; uiLoading: no; uiError: no; ` +
       `warmupTolerance: ${WARMUP_TOLERANCE}; missTolerance: ${MISS_TOLERANCE}`
   );
   scene.setAttribute('renderer', 'colorManagement: true');
@@ -688,10 +689,13 @@ function buildScene(arConfig) {
   camera.setAttribute('look-controls', 'enabled: false');
   scene.appendChild(camera);
 
-  // Ancla vacía: solo sirve para recibir targetFound.
-  const anchor = document.createElement('a-entity');
-  anchor.setAttribute('mindar-image-target', 'targetIndex: 0');
-  scene.appendChild(anchor);
+  // Dos anclas vacías: target 0 = cara QR, target 1 = cara texto.
+  // El puesto (1.º / 2.º / 3.º) no importa: la experiencia es la misma.
+  for (let i = 0; i < 2; i += 1) {
+    const anchor = document.createElement('a-entity');
+    anchor.setAttribute('mindar-image-target', `targetIndex: ${i}`);
+    scene.appendChild(anchor);
+  }
 
   return scene;
 }
