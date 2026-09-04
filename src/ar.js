@@ -340,8 +340,8 @@ export async function openAR(arConfig, videoEl, opciones = {}) {
 
   // Solo targetFound. targetLost no se escucha a propósito: ver la nota de
   // cabecera sobre por qué el seguimiento deja de importar al arrancar.
-  // Hay DOS anclas (cara QR + cara texto de la base): cualquiera dispara
-  // la misma experiencia. onFound ya es idempotente (yaArrancado).
+  // Hay TRES anclas (posterior QR + zona QR frontal + chapa): cualquiera
+  // dispara la misma experiencia. onFound ya es idempotente (yaArrancado).
   sceneEl.querySelectorAll('[mindar-image-target]').forEach((target) => {
     target.addEventListener('targetFound', onFound);
   });
@@ -634,9 +634,10 @@ function buildScene(arConfig) {
   scene.setAttribute(
     'mindar-image',
     // Interfaz propia de MindAR desactivada: los estados los pinta esta capa.
-    // maxTrack: 2 → la base tiene DOS caras (QR cuadrado + placa con texto);
-    // cualquiera debe abrir la misma RA. warmup/miss: ver constantes arriba.
-    `imageTargetSrc: ${arConfig.marcador}; maxTrack: 2; uiScanning: no; uiLoading: no; uiError: no; ` +
+    // maxTrack: 3 → posterior QR + zona QR frontal (recorte cuadrado) + chapa
+    // frontal completa. La chapa sola es ~3:1 y detecta peor a distancia de mano.
+    // Cualquiera abre la misma RA (el texto/puesto de la placa no importa).
+    `imageTargetSrc: ${arConfig.marcador}; maxTrack: 3; uiScanning: no; uiLoading: no; uiError: no; ` +
       `warmupTolerance: ${WARMUP_TOLERANCE}; missTolerance: ${MISS_TOLERANCE}`
   );
   scene.setAttribute('renderer', 'colorManagement: true');
@@ -646,9 +647,8 @@ function buildScene(arConfig) {
   camera.setAttribute('look-controls', 'enabled: false');
   scene.appendChild(camera);
 
-  // Dos anclas vacías: target 0 = cara QR, target 1 = cara texto.
-  // El puesto (1.º / 2.º / 3.º) no importa: la experiencia es la misma.
-  for (let i = 0; i < 2; i += 1) {
+  // Tres anclas vacías (índices del .mind). Misma experiencia en todas.
+  for (let i = 0; i < 3; i += 1) {
     const anchor = document.createElement('a-entity');
     anchor.setAttribute('mindar-image-target', `targetIndex: ${i}`);
     scene.appendChild(anchor);

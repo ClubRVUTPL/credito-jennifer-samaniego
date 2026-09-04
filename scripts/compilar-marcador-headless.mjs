@@ -1,5 +1,6 @@
-// compilar-marcador-headless.mjs — Compila placa-cara-qr.jpg + placa-cara-texto.jpg
-// a public/ar/targets.mind sin abrir el navegador a mano.
+// compilar-marcador-headless.mjs — Compila 3 targets a public/ar/targets.mind
+// (posterior QR + zona QR frontal cuadrada + chapa frontal) sin abrir el
+// navegador a mano.
 //
 // Reutiliza compilador-marcador.html (la misma herramienta manual) en un
 // navegador headless vía CDP, espera el resultado y escribe el fichero.
@@ -37,10 +38,10 @@ try {
   const { cdp } = navegador;
 
   await navegar(cdp, `${baseUrl}/compilador-marcador.html`);
-  console.log('Compilando el marcador (2 caras; 30-120 s según la máquina)…');
+  console.log('Compilando el marcador (3 targets; 30-180 s según la máquina)…');
 
   await esperar(cdp, 'Boolean(window.__resultadoCompilacion || window.__errorCompilacion)', {
-    timeoutMs: 240000,
+    timeoutMs: 300000,
     intervalMs: 1000,
   });
 
@@ -62,11 +63,12 @@ try {
   writeFileSync(salida, Buffer.from(base64, 'base64'));
 
   const kb = (statSync(salida).size / 1024).toFixed(1);
+  const labels = ['posterior-QR', 'frontal-QR', 'frontal-chapa'];
   console.log(`\ntargets.mind generado (${kb} kB)`);
   console.log(`  Targets: ${resumen.targets}`);
   if (Array.isArray(resumen.porTarget)) {
     for (const t of resumen.porTarget) {
-      const label = t.index === 0 ? 'QR' : t.index === 1 ? 'texto' : `t${t.index}`;
+      const label = labels[t.index] || `t${t.index}`;
       console.log(`  Target ${t.index} (${label}): matching=${t.matching}, tracking=${t.tracking}`);
     }
   }

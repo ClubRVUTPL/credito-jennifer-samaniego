@@ -6,8 +6,9 @@
     <title>Compilador del marcador</title>
     <!--
       Herramienta SOLO de desarrollo (no forma parte del build de producción).
-      Compila public/ar/placa-cara-qr.jpg + placa-cara-texto.jpg a targets.mind
-      (dos caras del mismo marcador físico) usando el compilador de mind-ar.
+      Compila tres imágenes a targets.mind: cara posterior QR, zona QR de la
+      cara frontal (recorte cuadrado, más fiable que la chapa ~3:1) y chapa
+      frontal completa. El puesto/texto de la placa no importa: misma RA.
       Instrucciones completas: scripts/compilar-marcador.md
     -->
     <style>
@@ -52,12 +53,14 @@
     </style>
   </head>
   <body>
-    <h1>Compilador del marcador (2 caras)</h1>
+    <h1>Compilador del marcador (3 targets)</h1>
     <p>
-      Lee <code>public/ar/placa-cara-qr.jpg</code> y
-      <code>public/ar/placa-cara-texto.jpg</code>, los compila con el
-      compilador del paquete <code>mind-ar</code> y descarga
-      <code>targets.mind</code> (un solo fichero con ambos targets).
+      Lee <code>placa-cara-qr.jpg</code>,
+      <code>placa-cara-frontal-qr.jpg</code> y
+      <code>placa-cara-texto.jpg</code>, los compila con el compilador de
+      <code>mind-ar</code> y descarga <code>targets.mind</code>.
+      La zona QR frontal es un recorte cuadrado: la chapa entera (~3:1) aporta
+      pocos descriptores estables a distancia de mano.
     </p>
     <div id="imagen" class="caras"></div>
     <p id="salida">Cargando las imágenes…</p>
@@ -69,6 +72,8 @@
       const salida = document.querySelector('#salida');
       const zonaImagen = document.querySelector('#imagen');
       const zonaDescarga = document.querySelector('#descarga');
+
+      const ETIQUETAS = ['posterior-QR', 'frontal-QR', 'frontal-chapa'];
 
       function log(texto) {
         salida.textContent = texto;
@@ -103,37 +108,46 @@
         zonaImagen.appendChild(fig);
       }
 
-      async function main() {
-        let imgQr;
-        let imgTexto;
+      async function cargarOFallar(url, claveError) {
         try {
-          imgQr = await cargarImagen('/ar/placa-cara-qr.jpg');
+          return await cargarImagen(url);
         } catch {
           log(
-            'No existe public/ar/placa-cara-qr.jpg (o no es una imagen válida).\n' +
-              'Coloca ahí la cara QR de la placa y recarga esta página.'
+            `No existe ${url} (o no es una imagen válida).\n` +
+              'Coloca el fichero en public/ar/ y recarga esta página.'
           );
-          window.__errorCompilacion = 'falta public/ar/placa-cara-qr.jpg';
-          return;
+          window.__errorCompilacion = claveError;
+          return null;
         }
-        try {
-          imgTexto = await cargarImagen('/ar/placa-cara-texto.jpg');
-        } catch {
-          log(
-            'No existe public/ar/placa-cara-texto.jpg (o no es una imagen válida).\n' +
-              'Coloca ahí la cara de texto de la placa y recarga esta página.'
-          );
-          window.__errorCompilacion = 'falta public/ar/placa-cara-texto.jpg';
-          return;
-        }
+      }
 
-        mostrarCara(imgQr, 'Cara QR — /ar/placa-cara-qr.jpg');
-        mostrarCara(imgTexto, 'Cara texto — /ar/placa-cara-texto.jpg');
+      async function main() {
+        const imgPosterior = await cargarOFallar(
+          '/ar/placa-cara-qr.jpg',
+          'falta public/ar/placa-cara-qr.jpg'
+        );
+        if (!imgPosterior) return;
+
+        const imgFrontalQr = await cargarOFallar(
+          '/ar/placa-cara-frontal-qr.jpg',
+          'falta public/ar/placa-cara-frontal-qr.jpg'
+        );
+        if (!imgFrontalQr) return;
+
+        const imgChapa = await cargarOFallar(
+          '/ar/placa-cara-texto.jpg',
+          'falta public/ar/placa-cara-texto.jpg'
+        );
+        if (!imgChapa) return;
+
+        mostrarCara(imgPosterior, '0 · Cara posterior QR — /ar/placa-cara-qr.jpg');
+        mostrarCara(imgFrontalQr, '1 · Zona QR frontal — /ar/placa-cara-frontal-qr.jpg');
+        mostrarCara(imgChapa, '2 · Chapa frontal completa — /ar/placa-cara-texto.jpg');
 
         const compiler = new window.MINDAR.IMAGE.Compiler();
         log('Compilando… 0 %');
         const dataList = await compiler.compileImageTargets(
-          [imgQr, imgTexto],
+          [imgPosterior, imgFrontalQr, imgChapa],
           (progreso) => {
             log(`Compilando… ${progreso.toFixed(0)} %`);
           }
@@ -149,7 +163,7 @@
         const detalle = porTarget
           .map(
             (t) =>
-              `  Target ${t.index} (${t.index === 0 ? 'QR' : 'texto'}): matching=${t.matching}, tracking=${t.tracking}`
+              `  Target ${t.index} (${ETIQUETAS[t.index] || 't' + t.index}): matching=${t.matching}, tracking=${t.tracking}`
           )
           .join('\n');
 
@@ -158,8 +172,7 @@
             `${detalle}\n` +
             `Total matching: ${matching}\n` +
             `Total tracking: ${tracking}\n\n` +
-            `Orientación: por debajo de ~100 puntos de detección por cara el marcador será poco fiable;\n` +
-            `busca una imagen con más contraste, texto y detalle no repetitivo.`
+            `Orientación: por debajo de ~100 puntos de detección por target el marcador será poco fiable.`
         );
 
         const buffer = await compiler.exportData();
